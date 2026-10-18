@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Cloud — Premium Developer Services & Store</title>
+  <meta name="description" content="Sample merchant store demonstrating seamless 0-fee UPI payments with YOUPI PG Universal One-Script Integration.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Dynamic YOUPI PG Universal Checkout Script Loader -->
+  <!-- Automatically connects to http://localhost:7000/youpi.js -->
+  <script id="youpi-script" src="http://localhost:7000/youpi.js" data-youpi-key="00000000-0000-0000-0000-000000000001"></script>
+</head>
+<body>
+  <!-- Background Glow Orbs -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Header -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">Apex Cloud</span>
+          <span class="brand-badge">PRO STORE</span>
+        </div>
+      </div>
+      <div class="gateway-status-pill" id="gatewayStatusPill">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-label" id="statusLabel">Checking Gateway...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-layout">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        0% Aggregator Fees • Instant UPI Settlement
+      </div>
+      <h1 class="hero-title">Experience Sovereign UPI Payments</h1>
+      <p class="hero-subtitle">
+        This sample merchant website demonstrates how any external application integrates with the YOUPI Payment Gateway using a single script and HMAC-SHA256 verified webhooks.
+      </p>
+    </section>
+
+    <!-- Two-Column Checkout Layout -->
+    <div class="checkout-grid">
+      <!-- Left Column: Products & Cart -->
+      <div class="card product-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="step-badge">1</span>
+            <div>
+              <h2 class="card-title">Select Your Plan or Service</h2>
+              <p class="card-desc">Choose a tier to test the checkout experience</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="plans-list" id="plansList">
+          <!-- Tier 0: ₹10 Test Plan (Selected by default for instant testing) -->
+          <label class="plan-option active" data-amount="10" data-name="Micro Test Sandbox Plan">
+            <div class="test-ribbon">QUICK TEST</div>
+            <input type="radio" name="plan" value="10" checked>
+            <div class="plan-content">
+              <div class="plan-info">
+                <span class="plan-title">Micro Test Sandbox Plan</span>
+                <span class="plan-perks">Live UPI Verification • 1-Click Zero-Fee Sandbox Test</span>
+              </div>
+              <div class="plan-price">
+                <span class="currency">₹</span>
+                <span class="amount">10</span>
+              </div>
+            </div>
+          </label>
+
+          <!-- Tier 1 -->
+          <label class="plan-option" data-amount="299" data-name="Developer Starter Kit">
+            <input type="radio" name="plan" value="299">
+            <div class="plan-content">
+              <div class="plan-info">
+                <span class="plan-title">Developer Starter Kit</span>
+                <span class="plan-perks">Unlimited Local Tests • SQLite WAL • 1 Month</span>
+              </div>
+              <div class="plan-price">
+                <span class="currency">₹</span>
+                <span class="amount">299</span>
+              </div>
+            </div>
+          </label>
+
+          <!-- Tier 2 (Popular) -->
+          <label class="plan-option" data-amount="499" data-name="Pro Sovereign Cloud">
+            <div class="popular-ribbon">RECOMMENDED</div>
+            <input type="radio" name="plan" value="499">
+            <div class="plan-content">
+              <div class="plan-info">
+                <span class="plan-title">Pro Sovereign Cloud</span>
+                <span class="plan-perks">Multi-VPA Auto Queue • SMS + Gmail Mesh</span>
+              </div>
+              <div class="plan-price">
+                <span class="currency">₹</span>
+                <span class="amount">499</span>
+              </div>
+            </div>
+          </label>
+
+          <!-- Tier 3 -->
+          <label class="plan-option" data-amount="999" data-name="Enterprise Cluster Node">
+            <input type="radio" name="plan" value="999">
+            <div class="plan-content">
+              <div class="plan-info">
+                <span class="plan-title">Enterprise Cluster Node</span>
+                <span class="plan-perks">Dedicated POS Till • Android Observer APK</span>
+              </div>
+              <div class="plan-price">
+                <span class="currency">₹</span>
+                <span class="amount">999</span>
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Customer Inputs -->
+        <div class="form-section">
+          <h3 class="form-heading">Customer Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="custName">Full Name</label>
+              <input type="text" id="custName" value="Rahul Sharma" placeholder="e.g. Rahul Sharma" required>
+            </div>
+            <div class="form-group">
+              <label for="custPhone">Mobile Number (WhatsApp)</label>
+              <input type="tel" id="custPhone" value="9876543210" placeholder="10-digit number" required>
+            </div>
+            <div class="form-group full-width">
+              <label for="custEmail">Email Address</label>
+              <input type="email" id="custEmail" value="rahul@example.com" placeholder="rahul@example.com" required>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Order Summary & Trigger -->
+      <div class="card summary-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="step-badge">2</span>
+            <div>
+              <h2 class="card-title">Order Summary & Pay</h2>
+              <p class="card-desc">Choose your integration trigger mode</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Summary Details -->
+        <div class="summary-details">
+          <div class="summary-row">
+            <span class="summary-label" id="summaryPlanName">Micro Test Sandbox Plan</span>
+            <span class="summary-value" id="summarySubtotal">₹10.00</span>
+          </div>
+          <div class="summary-row text-muted">
+            <span class="summary-label">Aggregator Gateway Fees</span>
+            <span class="summary-badge zero-fee">₹0.00 (0% FREE)</span>
+          </div>
+          <div class="summary-row text-muted">
+            <span class="summary-label">GST / Platform Fee</span>
+            <span class="summary-value">₹0.00</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-row total-row">
+            <span class="total-label">Total Payable:</span>
+            <span class="total-price" id="summaryTotal">₹10.00</span>
+          </div>
+        </div>
+
+        <!-- Trigger Mode Switch -->
+        <div class="integration-toggle-box">
+          <div class="toggle-header">
+            <span class="toggle-title">Integration Method</span>
+            <span class="toggle-mode-badge" id="modeBadge">Declarative Button</span>
+          </div>
+          <div class="toggle-buttons">
+            <button type="button" class="mode-btn active" id="btnModeDeclarative">
+              <span>Zero-JS Button</span>
+              <small>[data-youpi-pay]</small>
+            </button>
+            <button type="button" class="mode-btn" id="btnModeProgrammatic">
+              <span>Programmatic</span>
+              <small>Youpi.pay({...})</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Action Buttons -->
+        <div class="action-buttons-box">
+          <!-- Declarative Button -->
+          <button 
+            type="button"
+            id="declarativePayBtn" 
+            class="pay-btn btn-primary"
+            data-youpi-pay 
+            data-order-id="ORD-1001" 
+            data-amount="10"
+            data-currency="INR"
+            data-name="Apex Cloud"
+            data-description="Micro Test Sandbox Plan"
+            data-customer-name="Rahul Sharma"
+            data-customer-phone="9876543210"
+            data-customer-email="rahul@example.com"
+            data-metadata='{"plan":"micro_test","source":"payment_page"}'>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span id="btnPayLabel">Pay ₹10 via UPI</span>
+          </button>
+
+          <!-- Programmatic Button (Hidden by default) -->
+          <button 
+            type="button" 
+            id="programmaticPayBtn" 
+            class="pay-btn btn-secondary" 
+            style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>Launch Programmatic Youpi.pay()</span>
+          </button>
+        </div>
+
+        <!-- Security guarantee footnote -->
+        <div class="security-guarantee">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Direct Bank-to-Bank UPI Rails • No Middleman Holdbacks
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Gateway Terminal & Webhook Inspector -->
+    <section class="terminal-section card">
+      <div class="terminal-header">
+        <div class="terminal-title-group">
+          <div class="window-controls">
+            <span class="control close"></span>
+            <span class="control min"></span>
+            <span class="control max"></span>
+          </div>
+          <span class="terminal-heading">Live Payment State & Webhook Verification Terminal</span>
+        </div>
+        <div class="terminal-actions">
+          <button class="terminal-btn" id="simulateSmsBtn" title="Simulate incoming bank SMS credit to verify the payment">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Simulate Bank Credit
+          </button>
+          <button class="terminal-btn secondary" id="clearLogsBtn">Clear</button>
+        </div>
+      </div>
+
+      <div class="terminal-body" id="terminalLogs">
+        <div class="log-line info">
+          <span class="log-time">[System]</span>
+          <span class="log-text">Ready. Load http://localhost:7000/youpi.js and click Pay to test the modal and webhooks.</span>
+        </div>
+      </div>
+
+      <!-- Real-time Verification Badge Box -->
+      <div class="verification-status-panel" id="verificationPanel" style="display: none;">
+        <div class="verified-icon">✓</div>
+        <div class="verified-details">
+          <h4 class="verified-title">Payment Confirmed by HMAC-SHA256 Webhook!</h4>
+          <p class="verified-desc">
+            Order <strong id="verifiedOrderId">-</strong> • Amount <strong id="verifiedAmount">₹0.00</strong> • Bank UTR: <code id="verifiedUtr">-</code>
+          </p>
+        </div>
+        <span class="verified-badge">AUTHORITATIVE</span>
+      </div>
+    </section>
+  </main>
+
+  <!-- High-Impact Sovereign Payment Successful Popup Modal -->
+  <div id="paymentSuccessModal" class="success-modal-backdrop" style="display: none;">
+    <div class="success-modal-card">
+      <div class="confetti-container" id="confettiContainer"></div>
+      <button class="modal-close-btn" id="modalCloseBtn" type="button" aria-label="Close">&times;</button>
+      
+      <div class="success-icon-wrapper">
+        <div class="success-icon-ring"></div>
+        <div class="success-icon-glow"></div>
+        <svg class="success-check-svg" viewBox="0 0 52 52">
+          <circle class="checkmark-circle" cx="26" cy="26" r="24" fill="none"/>
+          <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+      </div>
+
+      <div class="success-badge">
+        <span class="pulse-dot"></span>
+        HMAC-SHA256 AUTHORITATIVE CONFIRMATION
+      </div>
+      <h2 class="modal-title">Payment Completed!</h2>
+      <p class="modal-subtitle">
+        Payment successfully received from <strong id="modalHeaderSender" class="sender-name-pill">-</strong>
+      </p>
+
+      <div class="modal-amount-display">
+        <span class="currency-symbol">₹</span><span id="modalAmountVal">10.00</span>
+        <span class="amount-tag">0% GATEWAY FEES</span>
+      </div>
+
+      <div class="modal-details-card">
+        <div class="detail-row">
+          <span class="detail-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Sender / Paid By
+          </span>
+          <span class="detail-val highlight-sender" id="modalSenderVal">
+            <span class="sender-tag-icon">👤</span>
+            <span id="modalSenderText">-</span>
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Order Reference
+          </span>
+          <span class="detail-val mono" id="modalOrderId">-</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            Bank UTR / Ref
+          </span>
+          <div class="utr-copy-group">
+            <span class="detail-val mono" id="modalUtr">-</span>
+            <button type="button" class="btn-copy-utr" id="btnCopyUtr" title="Copy UTR">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            Verification Channel
+          </span>
+          <span class="detail-val verification-badge">
+            <span class="bank-dot"></span>
+            SMS Banking Observer
+          </span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-primary modal-action-btn" id="btnModalContinue">
+          <span>Done &amp; Continue Shopping</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

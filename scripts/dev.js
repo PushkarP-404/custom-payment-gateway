@@ -48,7 +48,7 @@ console.log('🟢 ALL SERVICES ONLINE & OPERATIONAL');
 console.log('====================================================');
 console.log('• Merchant Panel & Control Hub: http://localhost:6001');
 console.log('• Payment Core REST API:        http://localhost:6100');
-console.log('• Customer Checkout Portal:     http://localhost:7000/checkout/:id');
+console.log('• Customer Checkout Portal:     http://localhost:7000/checkout/demo');
 console.log('• YOUPI Showcase Store:        http://localhost:5000 (toggleable)');
 console.log('• Gmail Payment Observer:       http://localhost:6003');
 console.log('• Google Messages / SMS Obs:    http://localhost:6002');

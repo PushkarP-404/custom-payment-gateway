@@ -84,7 +84,7 @@ export function createPaymentApp(customDb = null, options = {}) {
     queueEngine,
     eventEmitter,
     auditRepo,
-    activeDurationMs: Number(process.env.PAYMENT_ACTIVE_WINDOW_MS || 300000),
+    activeDurationMs: Number(process.env.PAYMENT_ACTIVE_WINDOW_MS || 600000),
     processingDurationMs: Number(process.env.PAYMENT_PROCESSING_WINDOW_MS || 30000)
   });
 

@@ -78,7 +78,10 @@ export class CheckoutServer {
     // This avoids cross-origin blocking, CORS errors, and tunnel DNS resolution issues.
     const clientApiBase = '';
 
-    const indicator = state?.upiServerIndicator || { status: 'ISSUES', tier: 'RED', label: 'Server Facing Issues' };
+    const defaultTier = process.env.NODE_ENV === 'production' ? 'RED' : 'GREEN';
+    const defaultStatus = process.env.NODE_ENV === 'production' ? 'ISSUES' : 'WORKING';
+    const defaultLabel = process.env.NODE_ENV === 'production' ? 'Server Facing Issues' : 'Server Is Working';
+    const indicator = state?.upiServerIndicator || { status: defaultStatus, tier: defaultTier, label: defaultLabel };
     const tier = indicator.tier || (indicator.status === 'WORKING' ? 'GREEN' : (indicator.status === 'BUSY' ? 'YELLOW' : 'RED'));
     const healthClass = tier === 'GREEN' ? 'is-working' : (tier === 'YELLOW' ? 'is-busy' : 'is-issues');
     const healthLabel = indicator.label || (tier === 'GREEN' ? 'Server Is Working' : (tier === 'YELLOW' ? 'UPI Server Busy' : 'Server Facing Issues'));
@@ -138,6 +141,17 @@ export class CheckoutServer {
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
       const pathname = url.pathname;
 
+      // CORS Preflight for external merchant sites embedding checkout
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Idempotency-Key, X-Device-Id, X-Timestamp, X-Signature, X-Merchant-Id, X-Gateway-Key, *'
+        });
+        res.end();
+        return;
+      }
+
       // Health
       if (pathname === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -160,7 +174,12 @@ export class CheckoutServer {
             'x-forwarded-proto': req.headers['x-forwarded-proto'] || 'https'
           }
         }, (proxyRes) => {
-          res.writeHead(proxyRes.statusCode, proxyRes.headers);
+          res.writeHead(proxyRes.statusCode, {
+            ...proxyRes.headers,
+            'access-control-allow-origin': '*',
+            'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'access-control-allow-headers': 'Content-Type, Authorization, Idempotency-Key, X-Device-Id, X-Timestamp, X-Signature, X-Merchant-Id, X-Gateway-Key, *'
+          });
           proxyRes.pipe(res);
         });
 
@@ -233,11 +252,65 @@ export class CheckoutServer {
         return;
       }
 
-      // Checkout Page: GET /checkout/:id
-      const checkoutMatch = pathname.match(/^\/checkout\/([^/]+)$/);
-      if (checkoutMatch) {
-        const paymentId = checkoutMatch[1];
-        const state = await this.fetchPaymentState(paymentId);
+      // Checkout Page: GET /checkout, /checkout/:id, /checkout/demo
+      const checkoutMatch = pathname.match(/^\/checkout(?:\/([^/]+))?$/);
+      if (checkoutMatch || pathname === '/') {
+        let paymentId = checkoutMatch ? checkoutMatch[1] : null;
+
+        // Auto-provision a genuine session if user directly navigated to literal /checkout/:id, demo, or unprovided
+        if (!paymentId || paymentId === ':id' || paymentId === 'demo' || paymentId === 'test') {
+          try {
+            const internalPort = process.env.PAYMENT_API_PORT || 6100;
+            const customAmount = url.searchParams.get('customAmount') || '499.00';
+            const createRes = await fetch(`http://127.0.0.1:${internalPort}/api/v1/payments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: `ORD-DEMO-${Date.now()}`,
+                amount: customAmount,
+                currency: 'INR',
+                description: 'Demo Checkout Session'
+              })
+            });
+            if (createRes.ok) {
+              const created = await createRes.json();
+              if (created.paymentId) {
+                const search = url.search || '';
+                res.writeHead(302, { Location: `/checkout/${created.paymentId}${search}` });
+                res.end();
+                return;
+              }
+            }
+          } catch (err) {
+            console.warn('[CheckoutPortal] Auto-session creation error:', err.message);
+          }
+        }
+
+        let state = await this.fetchPaymentState(paymentId);
+        if (!state && paymentId) {
+          // If state not found, auto-create a session so user is never stuck on a dead 404 page
+          try {
+            const internalPort = process.env.PAYMENT_API_PORT || 6100;
+            const createRes = await fetch(`http://127.0.0.1:${internalPort}/api/v1/payments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: `ORD-RETRY-${Date.now()}`,
+                amount: url.searchParams.get('customAmount') || '499.00',
+                currency: 'INR',
+                description: 'Active Checkout Session'
+              })
+            });
+            if (createRes.ok) {
+              const created = await createRes.json();
+              if (created.paymentId) {
+                res.writeHead(302, { Location: `/checkout/${created.paymentId}${url.search || ''}` });
+                res.end();
+                return;
+              }
+            }
+          } catch {}
+        }
 
         const rendered = this.renderHtml(paymentId, state);
         res.writeHead(200, {

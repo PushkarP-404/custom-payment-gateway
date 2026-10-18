@@ -66,9 +66,7 @@ export async function formatQrDataUrl(rawText, qrcodeModule = null) {
   }
 
   let text = typeof rawText === 'string' ? rawText : String(rawText);
-  if (text.startsWith('2@') || text.startsWith('1@')) {
-    text = `https://wa.me/settings/linked_devices#${text}`;
-  }
+  // Keep authentic raw multi-device token (2@... or 1@...) for WhatsApp mobile scanner
 
   let qrEngine = qrcodeModule || qrcodeLib;
   if (!qrEngine) {
@@ -344,10 +342,7 @@ export class WhatsAppBerryService extends EventEmitter {
         return;
       }
 
-      // Format as official WhatsApp Web pairing link if not already prefixed
-      if (rawText.startsWith('2@') || rawText.startsWith('1@')) {
-        rawText = `https://wa.me/settings/linked_devices#${rawText}`;
-      }
+      // Keep authentic raw pairing string as emitted by WhatsApp Multi-Device protocol
 
       try {
         const dataUrl = await formatQrDataUrl(rawText, qrcodeLib);

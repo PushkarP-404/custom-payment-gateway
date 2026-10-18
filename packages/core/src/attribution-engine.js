@@ -496,6 +496,61 @@ export class AttributionEngine {
     const lateMatchedSession = recentExpired.find(s => s.amountPaise === normalizedObs.amountPaise);
 
     if (lateMatchedSession) {
+      if (lateMatchedSession.status === PaymentStatus.EXPIRED) {
+        // Delayed Bank SMS Recovery: Resurrect expired session to SUCCESS!
+        const nowIso = new Date().toISOString();
+        this.sessionRepo.db.run(`
+          UPDATE payment_sessions
+          SET status = 'SUCCESS',
+              completed_at = ?,
+              attributed_observation_id = ?,
+              verification_level = 1,
+              verification_sources = ?,
+              verification_tag = 'Late Bank Recovery Success'
+          WHERE id = ?
+        `, [nowIso, savedObs.id, JSON.stringify([normalizedObs.source]), lateMatchedSession.id]);
+
+        this.obsRepo.markAttributed(savedObs.id, lateMatchedSession.id);
+
+        if (this.auditRepo) {
+          this.auditRepo.log({
+            merchantId: lateMatchedSession.merchantId,
+            entityType: 'PAYMENT_SESSION',
+            entityId: lateMatchedSession.id,
+            action: 'PAYMENT_RESURRECTED_FROM_EXPIRED',
+            actorType: 'SYSTEM',
+            details: {
+              observationId: savedObs.id,
+              source: normalizedObs.source,
+              amountPaise: normalizedObs.amountPaise.toString(),
+              recoveredAt: nowIso
+            }
+          });
+        }
+
+        this.eventEmitter.emit('PAYMENT.SUCCESS', {
+          paymentId: lateMatchedSession.id,
+          orderId: lateMatchedSession.orderId,
+          merchantId: lateMatchedSession.merchantId,
+          amountPaise: normalizedObs.amountPaise,
+          observationId: savedObs.id,
+          verificationLevel: 1,
+          verificationTag: 'Late Bank Recovery Success',
+          sources: [normalizedObs.source]
+        });
+
+        return {
+          attributed: true,
+          duplicate: false,
+          lateMatch: true,
+          paymentSessionId: lateMatchedSession.id,
+          observationId: savedObs.id,
+          outcomeStatus: PaymentStatus.SUCCESS,
+          verificationLevel: 1,
+          verificationTag: 'Late Bank Recovery Success'
+        };
+      }
+
       // Mark observation as LATE_UNMATCHED
       this.obsRepo.markLateUnmatched(savedObs.id);
 

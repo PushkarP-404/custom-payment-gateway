@@ -53,12 +53,40 @@ export function registerPollerRoutes(server, ctx) {
     });
   });
 
+  const recentEvents = [];
+
+  // GET /api/v1/pollers/events (Live Health & Diagnostic Feed for Shortcuts/Tunnel)
+  server.get('/api/v1/pollers/events', async (req, res) => {
+    HttpServer.json(res, 200, {
+      status: 'ONLINE',
+      service: 'YOUPI PG Observer Ingest',
+      message: 'Endpoint is actively listening for Apple Shortcuts & Banking SMS observations.',
+      endpoint: '/api/v1/pollers/events',
+      method: 'POST',
+      totalReceived: recentEvents.length,
+      recentEvents: recentEvents.slice(-20).reverse()
+    });
+  });
+
   // POST /api/v1/pollers/events (Universal Observation Ingest for Gmail / SMS 2-Layer Observers)
   server.post('/api/v1/pollers/events', async (req, res) => {
     const body = await HttpServer.parseBody(req);
 
-    if (!body.receivingAccountId || !body.source) {
-      HttpServer.json(res, 400, { error: 'Missing required fields: receivingAccountId and source.' });
+    let source = (body.source || 'SMS_GATEWAY').toUpperCase();
+    if (source === 'SMS' || source === 'IOS' || source === 'SHORTCUT' || source === 'IPHONE' || source === 'WEBHOOK' || source === 'APPLE') {
+      source = 'SMS_GATEWAY';
+    }
+    let receivingAccountId = body.receivingAccountId;
+    if (!receivingAccountId) {
+      try {
+        const merchantId = req.headers['x-merchant-id'] || '00000000-0000-0000-0000-000000000001';
+        const activeAcc = ctx.accountRepo?.findActiveForMerchant ? ctx.accountRepo.findActiveForMerchant(merchantId) : null;
+        if (activeAcc) receivingAccountId = activeAcc.id;
+      } catch {}
+    }
+
+    if (!receivingAccountId) {
+      HttpServer.json(res, 400, { error: 'No active receiving UPI account configured on gateway.' });
       return;
     }
 
@@ -66,12 +94,19 @@ export function registerPollerRoutes(server, ctx) {
     const rawText = body.rawText || body.text || body.message || body.sms || body.body || (typeof body.rawPayload === 'string' ? body.rawPayload : (body.rawPayload?.text || body.rawPayload?.body));
     const sender = body.sender || body.from || body.rawPayload?.sender || body.rawPayload?.from;
 
+    console.log('\n====================================================');
+    console.log(`📥 [OBSERVER EVENT INGEST] Incoming ${source} Alert:`);
+    console.log(`• Time: ${new Date().toLocaleTimeString()}`);
+    console.log(`• Sender: ${sender || 'N/A'}`);
+    console.log(`• Content: "${rawText || JSON.stringify(body)}"`);
+    console.log('====================================================');
+
     if (ctx.pipeline && rawText) {
       const pipeResult = ctx.pipeline.process({
-        source: body.source,
+        source,
         rawText,
         sender,
-        receivingAccountId: body.receivingAccountId,
+        receivingAccountId,
         paymentSessionId: body.paymentSessionId,
         isTest: Boolean(body.isTest),
         testModeActive: Boolean(body.testModeActive)
@@ -90,6 +125,17 @@ export function registerPollerRoutes(server, ctx) {
       }
 
       if (pipeResult.status === 'VERIFIED') {
+        recentEvents.push({
+          receivedAt: new Date().toISOString(),
+          source,
+          sender: sender || null,
+          rawText: rawText ? (rawText.length > 200 ? rawText.slice(0, 200) + '...' : rawText) : null,
+          amount: pipeResult.amount || null,
+          reference: pipeResult.reference || null,
+          status: 'VERIFIED'
+        });
+        if (recentEvents.length > 50) recentEvents.shift();
+
         HttpServer.json(res, 200, {
           accepted: true,
           observationId: pipeResult.messageId || pipeResult.stages?.stage6?.details?.observationId,
@@ -107,7 +153,7 @@ export function registerPollerRoutes(server, ctx) {
       const observedAt = body.observedAt ? new Date(body.observedAt) : new Date();
 
       if (rawText && (!amountPaise || !bankRef)) {
-        const isEmail = body.source === 'GMAIL' || body.source === 'EMAIL';
+        const isEmail = source === 'GMAIL' || source === 'EMAIL';
         const parsed = isEmail
           ? BankEmailParser.parse({ subject: body.subject || body.rawPayload?.subject || '', body: rawText, date: observedAt, from: sender })
           : BankSmsParser.parse({ text: rawText, sender, timestamp: observedAt });
@@ -119,8 +165,8 @@ export function registerPollerRoutes(server, ctx) {
       }
 
       const normalized = ObservationNormalizer.normalize({
-        source: body.source,
-        receivingAccountId: body.receivingAccountId,
+        source,
+        receivingAccountId,
         rawPayload: body.rawPayload || body,
         amountPaise,
         amount: body.amount || (amountPaise ? (Number(amountPaise) / 100).toFixed(2) : undefined),
@@ -130,6 +176,17 @@ export function registerPollerRoutes(server, ctx) {
       });
 
       const result = ctx.attributionEngine.processObservation(normalized);
+
+      recentEvents.push({
+        receivedAt: new Date().toISOString(),
+        source,
+        sender: sender || null,
+        rawText: rawText ? (rawText.length > 200 ? rawText.slice(0, 200) + '...' : rawText) : null,
+        amount: body.amount || (amountPaise ? (Number(amountPaise)/100).toFixed(2) : null),
+        reference: bankRef || null,
+        status: result?.attributed ? 'ATTRIBUTED_SUCCESS' : (result?.outcomeStatus || 'RECEIVED')
+      });
+      if (recentEvents.length > 50) recentEvents.shift();
 
       HttpServer.json(res, 200, {
         accepted: true,

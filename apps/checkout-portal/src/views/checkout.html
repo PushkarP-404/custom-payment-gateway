@@ -3346,6 +3346,10 @@
                 Enter the 6-digit code sent to your phone:
               </div>
 
+              <div id="authDevOtpHint"
+                style="display:none; font-size:12px; color:#1e40af; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:8px 12px; margin-bottom:12px; line-height:1.4;">
+              </div>
+
               <div class="ypg-input-group">
                 <input type="text" class="ypg-input-control ypg-otp-control" id="authOtpInput" placeholder="••••••"
                   maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
@@ -4561,8 +4565,21 @@
         if (badge) badge.innerText = '+91 ' + currentAuthMobile;
         const otpInput = document.getElementById('authOtpInput');
         if (otpInput) {
-          otpInput.value = '';
+          if (lastReceivedDevOtp) {
+            otpInput.value = lastReceivedDevOtp;
+          } else {
+            otpInput.value = '';
+          }
           setTimeout(() => otpInput.focus(), 50);
+        }
+        const hintEl = document.getElementById('authDevOtpHint');
+        if (hintEl) {
+          if (lastReceivedDevOtp) {
+            hintEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>🔐 <strong>Code:</strong> <span style="font-family:monospace;font-size:14px;letter-spacing:2px;font-weight:700;color:#1e40af;">${lastReceivedDevOtp}</span></span><span style="font-size:11px;color:#3b82f6;background:#dbeafe;padding:2px 6px;border-radius:4px;">Auto-filled</span></div>`;
+            hintEl.style.display = 'block';
+          } else {
+            hintEl.style.display = 'none';
+          }
         }
         startOtpCooldown(30);
       }
@@ -4824,13 +4841,27 @@
           })
         });
         const data = await res.json();
+        if (data && data.devOtp) lastReceivedDevOtp = data.devOtp;
         if (res.ok) {
           startOtpCooldown(30);
           showOptionToast('Fresh OTP dispatched to your WhatsApp number!');
           const otpInput = document.getElementById('authOtpInput');
           if (otpInput) {
-            otpInput.value = '';
+            if (lastReceivedDevOtp) {
+              otpInput.value = lastReceivedDevOtp;
+            } else {
+              otpInput.value = '';
+            }
             otpInput.focus();
+          }
+          const hintEl = document.getElementById('authDevOtpHint');
+          if (hintEl) {
+            if (lastReceivedDevOtp) {
+              hintEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><span>🔐 <strong>Code:</strong> <span style="font-family:monospace;font-size:14px;letter-spacing:2px;font-weight:700;color:#1e40af;">${lastReceivedDevOtp}</span></span><span style="font-size:11px;color:#3b82f6;background:#dbeafe;padding:2px 6px;border-radius:4px;">Auto-filled</span></div>`;
+              hintEl.style.display = 'block';
+            } else {
+              hintEl.style.display = 'none';
+            }
           }
         } else {
           showOptionToast(data.error || 'Failed to resend OTP.');

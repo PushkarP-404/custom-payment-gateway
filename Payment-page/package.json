@@ -1,0 +1,14 @@
+{
+  "name": "payment-page-website",
+  "version": "1.0.0",
+  "description": "Sample Merchant Website integrated with YOUPI Payment Gateway",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

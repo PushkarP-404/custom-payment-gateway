@@ -2995,20 +2995,65 @@
               </div>
             </div>
 
-            <div id="waQrBox"
-              style="background:#ffffff; border-radius:0.75rem; padding:1rem; display:inline-block; margin:0 auto 1rem auto; text-align:center;">
-              <div id="waQrPlaceholder"
-                style="width:240px; height:240px; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.85rem; text-align:center; padding:1rem;">
-                Click "Connect / Refresh QR" to pair device
-              </div>
-              <img id="waQrImg" src="" alt="WhatsApp Pairing QR" style="width:240px; height:240px; display:none; image-rendering:pixelated;" onerror="this.style.display='none'; if(document.getElementById('waQrPlaceholder')){ document.getElementById('waQrPlaceholder').style.display='flex'; document.getElementById('waQrPlaceholder').innerText='QR preview unavailable. Click Refresh QR.'; }" />
+            <!-- Two Pairing Methods Tabs -->
+            <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
+              <button type="button" class="btn btn-secondary active" id="tabBtnWaQr" onclick="switchWaPairingMode('qr')" style="font-weight:600;">📷 Method 1: Scan QR Code</button>
+              <button type="button" class="btn btn-secondary" id="tabBtnWaCode" onclick="switchWaPairingMode('code')" style="font-weight:600;">🔢 Method 2: Link with 8-Digit Code</button>
             </div>
 
+            <!-- Pane 1: QR Code -->
+            <div id="waPaneQr" style="display:block; text-align:center; margin-bottom:1.5rem;">
+              <div id="waQrBox"
+                style="background:#ffffff; border-radius:0.75rem; padding:1rem; display:inline-block; margin:0 auto 1rem auto; text-align:center; border:2px solid #e2e8f0; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <div id="waQrPlaceholder"
+                  style="width:240px; height:240px; display:flex; align-items:center; justify-content:center; color:#0f172a; font-size:0.85rem; text-align:center; padding:1rem;">
+                  Click "⚡ Connect / Refresh QR" to generate pairing code
+                </div>
+                <img id="waQrImg" src="" alt="WhatsApp Pairing QR" style="width:240px; height:240px; display:none; image-rendering:pixelated;" onerror="this.style.display='none'; if(document.getElementById('waQrPlaceholder')){ document.getElementById('waQrPlaceholder').style.display='flex'; document.getElementById('waQrPlaceholder').innerText='QR preview unavailable. Click Refresh QR.'; }" />
+              </div>
+              <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.25rem;">
+                Open WhatsApp on phone → <strong>Settings</strong> → <strong>Linked Devices</strong> → <strong>Link a Device</strong>
+              </div>
+            </div>
+
+            <!-- Pane 2: 8-Digit Pairing Code (Bypasses Camera Scan) -->
+            <div id="waPaneCode" style="display:none; margin-bottom:1.5rem;">
+              <div style="background:var(--bg-surface); border:1px solid var(--border); border-radius:0.75rem; padding:1.25rem; max-width:480px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:#f8fafc;">
+                  Your WhatsApp Mobile Number:
+                </label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                  <span style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:6px; padding:0.5rem 0.75rem; font-size:0.9rem; color:#94a3b8; font-weight:600;">+91</span>
+                  <input type="tel" id="waPhoneInput" placeholder="Enter 10-digit phone number (e.g. 9876543210)" style="flex:1; padding:0.55rem 0.75rem; border-radius:6px; border:1px solid var(--border); background:var(--bg-input); color:var(--text); font-family:monospace; font-size:0.95rem;" />
+                  <button type="button" class="btn btn-primary" id="btnGetWaPairingCode" onclick="requestWhatsAppPairingCode()">
+                    Get 8-Digit Code
+                  </button>
+                </div>
+
+                <!-- Display Box for Generated 8-Digit Code -->
+                <div id="waPairingResultBox" style="display:none; background:#090d16; border:2px dashed #3b82f6; border-radius:0.75rem; padding:1.25rem; text-align:center; margin-top:1rem;">
+                  <div style="font-size:0.8rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">
+                    YOUR 8-DIGIT WHATSAPP PAIRING CODE
+                  </div>
+                  <div id="waPairingCodeVal" style="font-size:2.2rem; font-weight:800; letter-spacing:0.18em; color:#38bdf8; font-family:monospace; margin-bottom:0.75rem; text-shadow:0 0 12px rgba(56,189,248,0.3);">
+                    ---- - ----
+                  </div>
+                  <div style="font-size:0.8rem; color:#cbd5e1; line-height:1.5; text-align:left; background:rgba(255,255,255,0.03); border-radius:6px; padding:0.75rem;">
+                    <strong>Instructions:</strong><br>
+                    1. Open WhatsApp on your phone.<br>
+                    2. Go to <strong>Settings</strong> → <strong>Linked Devices</strong>.<br>
+                    3. Tap <strong>Link a Device</strong>.<br>
+                    4. At bottom, tap <strong>"Link with phone number instead"</strong>.<br>
+                    5. Enter the 8-digit code shown above!
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-              <button class="btn btn-primary" id="btnWaConnect" onclick="reconnectWhatsApp()">⚡ Connect / Refresh
-                QR</button>
-              <button class="btn btn-danger" id="btnWaDisconnect" onclick="disconnectWhatsApp()"
-                style="display:none;">🔌 Disconnect</button>
+              <button class="btn btn-primary" id="btnWaConnect" onclick="reconnectWhatsApp()">⚡ Connect / Refresh QR</button>
+              <button class="btn btn-danger" id="btnWaDisconnect" onclick="disconnectWhatsApp()" style="display:none;">🔌 Disconnect</button>
               <button class="btn btn-secondary" onclick="fetchWhatsAppStatus(true)">🔄 Check Status</button>
             </div>
           </div>
@@ -5293,6 +5338,65 @@
     function closeGmailGuideModal() { document.getElementById('gmailGuideModal').hidden = true; }
 
     // --- WHATSAPP BERRY PROTOCOL ---
+    function switchWaPairingMode(mode) {
+      const paneQr = document.getElementById('waPaneQr');
+      const paneCode = document.getElementById('waPaneCode');
+      const tabQr = document.getElementById('tabBtnWaQr');
+      const tabCode = document.getElementById('tabBtnWaCode');
+
+      if (mode === 'code') {
+        if (paneQr) paneQr.style.display = 'none';
+        if (paneCode) paneCode.style.display = 'block';
+        if (tabQr) tabQr.classList.remove('active');
+        if (tabCode) tabCode.classList.add('active');
+      } else {
+        if (paneQr) paneQr.style.display = 'block';
+        if (paneCode) paneCode.style.display = 'none';
+        if (tabQr) tabQr.classList.add('active');
+        if (tabCode) tabCode.classList.remove('active');
+      }
+    }
+
+    async function requestWhatsAppPairingCode() {
+      const phoneInput = document.getElementById('waPhoneInput');
+      const phoneNumber = phoneInput ? phoneInput.value.trim() : '';
+      if (!phoneNumber || phoneNumber.length < 10) {
+        alert('Please enter a valid 10-digit mobile number.');
+        return;
+      }
+
+      const btn = document.getElementById('btnGetWaPairingCode');
+      const oldText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = '⏳ Requesting Code...';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/admin/whatsapp/pairing-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phoneNumber })
+        });
+        const data = await res.json();
+        if (data.success && data.pairingCode) {
+          const formatted = String(data.pairingCode).replace(/(.{4})/, '$1 - ');
+          const valEl = document.getElementById('waPairingCodeVal');
+          const boxEl = document.getElementById('waPairingResultBox');
+          if (valEl) valEl.innerText = formatted;
+          if (boxEl) boxEl.style.display = 'block';
+
+          showAdminToast('Pairing code generated! Enter it in WhatsApp.');
+          await fetchWhatsAppStatus();
+        } else {
+          alert('Pairing Code Error: ' + (data.error || 'Failed to generate code'));
+        }
+      } catch (err) {
+        alert('Network error requesting pairing code: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = oldText;
+      }
+    }
+
     async function fetchWhatsAppStatus(isManual = false) {
       try {
         const res = await fetch(`${API_BASE}/api/v1/admin/whatsapp/status`);
@@ -5315,8 +5419,23 @@
           if (title) title.innerText = 'WhatsApp Connected & Active';
           if (phoneDisplay) phoneDisplay.innerHTML = `Linked Phone: <strong style="color:#34d399;">${data.phoneNumber || 'Linked Device'}</strong>`;
           if (qrBox) qrBox.style.display = 'none';
+          const boxEl = document.getElementById('waPairingResultBox');
+          if (boxEl) boxEl.style.display = 'none';
           if (btnDisconnect) btnDisconnect.style.display = 'inline-block';
           if (btnConnect) btnConnect.innerText = '🔄 Re-Pair Device';
+        } else if (data.status === 'PAIRING_CODE_READY') {
+          if (badge) { badge.className = 'badge badge-info'; badge.innerText = 'CODE READY'; }
+          if (dot) dot.style.color = '#38bdf8';
+          if (title) title.innerText = 'Enter 8-Digit Code in WhatsApp';
+          if (phoneDisplay) phoneDisplay.innerText = `Awaiting code entry from: ${data.pairingPhone || 'your handset'}`;
+          if (btnDisconnect) btnDisconnect.style.display = 'inline-block';
+          if (data.pairingCode) {
+            const formatted = String(data.pairingCode).replace(/(.{4})/, '$1 - ');
+            const valEl = document.getElementById('waPairingCodeVal');
+            const boxEl = document.getElementById('waPairingResultBox');
+            if (valEl) valEl.innerText = formatted;
+            if (boxEl) boxEl.style.display = 'block';
+          }
         } else if (data.status === 'QR_READY') {
           if (badge) { badge.className = 'badge badge-warning'; badge.innerText = 'QR READY'; }
           if (dot) dot.style.color = '#fbbf24';
@@ -5366,7 +5485,7 @@
           if (qrImg) qrImg.style.display = 'none';
           if (qrPlaceholder) {
             qrPlaceholder.style.display = 'flex';
-            qrPlaceholder.innerText = 'Click "Connect WhatsApp" to pair device';
+            qrPlaceholder.innerText = 'Click "Connect / Refresh QR" or use 8-Digit Code to pair';
           }
           if (btnDisconnect) btnDisconnect.style.display = 'none';
           if (btnConnect) btnConnect.innerText = '⚡ Connect WhatsApp';

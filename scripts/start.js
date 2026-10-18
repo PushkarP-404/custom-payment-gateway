@@ -37,18 +37,13 @@ const domain = (branding.cloudflareDomain || branding.domainTld || process.env.C
 const prefix = (branding.deploymentPrefix || branding.domainPrefix || process.env.DEPLOYMENT_PREFIX || 'pay').trim().toLowerCase().replace(/[^a-z0-9-_]/g, '') || 'pay';
 
 if (!domain) {
-  console.error('\n================================================================');
-  console.error('❌ [CONFIGURATION ERROR] PRODUCTION STARTUP FAILED');
-  console.error('================================================================');
-  console.error('Cloudflare Domain is required when running in PRODUCTION mode.');
-  console.error('Please configure your Cloudflare Domain in the Merchant Admin panel,');
-  console.error('or set CLOUDFLARE_DOMAIN in .env before running `npm start`.');
-  console.error('');
-  console.error('YOUPI PG V2 adheres to authoritative production mode and will NOT');
-  console.error('silently rewrite or fall back to localhost in production.');
-  console.error('================================================================\n');
-  process.exit(1);
-}
+  console.log('\n================================================================');
+  console.log('ℹ️  [STARTUP NOTICE] No CLOUDFLARE_DOMAIN configured in .env');
+  console.log('   Starting YOUPI PG in Localhost / Development Mode...');
+  console.log('   (To deploy with public Cloudflare tunnels, set CLOUDFLARE_DOMAIN in .env)');
+  console.log('================================================================\n');
+  await import('./dev.js');
+} else {
 
 let runtimeUrls;
 try {
@@ -123,3 +118,4 @@ const shutdown = async () => {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+}
