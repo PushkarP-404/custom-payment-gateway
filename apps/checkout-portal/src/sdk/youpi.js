@@ -255,13 +255,13 @@
 
       // If running on localhost / 127.0.0.1 and targetUrl points to remote domain, normalize to portalUrl
       if (isBrowser && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        if (targetUrl.includes('gauravtesting.online')) {
-          try {
-            const parsed = new URL(targetUrl);
-            const portalBase = (this.options.portalUrl || 'http://localhost:7000').replace(/\/$/, '');
+        try {
+          const parsed = new URL(targetUrl);
+          if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+            const portalBase = (this.options.portalUrl || (window.location.protocol + '//' + window.location.hostname + ':7000')).replace(/\/$/, '');
             targetUrl = `${portalBase}${parsed.pathname}${parsed.search}`;
-          } catch {}
-        }
+          }
+        } catch {}
       }
 
       // Add embedded flag and custom params

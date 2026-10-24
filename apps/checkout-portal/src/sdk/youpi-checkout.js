@@ -255,13 +255,13 @@
 
       // If running on localhost / 127.0.0.1 and targetUrl points to remote domain, normalize to portalUrl
       if (isBrowser && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        if (targetUrl.includes('gauravtesting.online')) {
-          try {
-            const parsed = new URL(targetUrl);
-            const portalBase = (this.options.portalUrl || 'http://localhost:7000').replace(/\/$/, '');
+        try {
+          const parsed = new URL(targetUrl);
+          if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+            const portalBase = (this.options.portalUrl || (window.location.protocol + '//' + window.location.hostname + ':7000')).replace(/\/$/, '');
             targetUrl = `${portalBase}${parsed.pathname}${parsed.search}`;
-          } catch {}
-        }
+          }
+        } catch {}
       }
 
       // Add embedded flag and custom params
@@ -346,10 +346,8 @@
       backdrop.appendChild(container);
       document.body.appendChild(backdrop);
 
-      requestAnimationFrame(() => {
-        backdrop.classList.add('active');
-        container.classList.add('active');
-      });
+      backdrop.classList.add('active');
+      container.classList.add('active');
 
       this.backdrop = backdrop;
       this.container = container;
@@ -703,28 +701,38 @@
         /* MOBILE BOTTOM DRAWER / BOTTOM SHEET STYLES */
         @media (max-width: 767px) {
           .youpi-checkout-backdrop {
-            align-items: flex-end;
+            position: fixed !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            margin: 0 !important;
           }
           .youpi-checkout-container {
-            width: 100vw;
-            max-width: 100vw;
-            height: 100dvh;
-            height: 100vh;
-            height: 100%;
-            max-height: 100dvh;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-            border-top-left-radius: 18px;
-            border-top-right-radius: 18px;
-            transform: translateY(100%);
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 90vh !important;
+            height: 90dvh !important;
+            max-height: 94vh !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-top-left-radius: 20px !important;
+            border-top-right-radius: 20px !important;
+            margin: 0 !important;
+            transform: translateY(0) !important;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6) !important;
             touch-action: auto !important;
-            overflow: hidden;
-          }
-          .youpi-checkout-container.active {
-            transform: translateY(0);
+            overflow: hidden !important;
           }
           .youpi-checkout-container.closing {
-            transform: translateY(100%);
+            transform: translateY(100%) !important;
           }
         }
       `;

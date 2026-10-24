@@ -298,21 +298,6 @@ async function checkUpiServerHealth(ctx, enabledMethods = [], sellingMode = 'OFF
     };
   }
 
-  // In local development / non-production mode, default to GREEN so developers & testers are not blocked
-  if (process.env.NODE_ENV !== 'production') {
-    return {
-      status: 'WORKING',
-      tier: 'GREEN',
-      label: 'Server Is Working',
-      isWorking: true,
-      reason: 'Local Development Mode: UPI observer pipeline active (Simulator & Local Testing)',
-      smsHealthy: true,
-      gmailHealthy: true,
-      warning: null,
-      recommendedAlternative: null
-    };
-  }
-
   return {
     status: 'ISSUES',
     tier: 'RED',

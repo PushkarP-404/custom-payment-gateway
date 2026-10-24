@@ -55,12 +55,18 @@ export class GmailObserverServer {
       // GET /oauth/url
       if (pathname === '/oauth/url') {
         let clientId = '';
-        const apiBase = (this.poller.apiBaseUrl && !this.poller.apiBaseUrl.includes('gauravtesting.online')) ? this.poller.apiBaseUrl : `http://127.0.0.1:${process.env.PAYMENT_API_PORT || 6100}`;
+        let finalRedirectUri = process.env.GMAIL_REDIRECT_URI || '';
+        const apiBase = (this.poller.apiBaseUrl && (this.poller.apiBaseUrl.includes('localhost') || this.poller.apiBaseUrl.includes('127.0.0.1')))
+          ? this.poller.apiBaseUrl
+          : `http://127.0.0.1:${process.env.PAYMENT_API_PORT || 6100}`;
         try {
-          const credRes = await fetch(`${apiBase}/api/v1/admin/gmail/credentials`);
+          const credRes = await fetch(`${apiBase}/api/v1/admin/gmail/credentials`, {
+            signal: AbortSignal.timeout(1000)
+          });
           if (credRes.ok) {
             const credData = await credRes.json();
             clientId = credData.clientId || credData.gmailConfig?.clientId || '';
+            if (credData.redirectUri) finalRedirectUri = credData.redirectUri;
           }
         } catch {}
 
@@ -70,7 +76,9 @@ export class GmailObserverServer {
             : (process.env.GMAIL_CLIENT_ID || 'mock-youpi-client-id.apps.googleusercontent.com');
         }
 
-        const finalRedirectUri = 'https://pay-gmail.gauravtesting.online/oauth/callback';
+        if (!finalRedirectUri) {
+          finalRedirectUri = process.env.GMAIL_REDIRECT_URI || `http://localhost:${process.env.GMAIL_OBSERVER_PORT || 6003}/oauth/callback`;
+        }
         const scope = encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email');
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(finalRedirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&include_granted_scopes=true`;
 
@@ -102,14 +110,20 @@ export class GmailObserverServer {
         try {
           let clientId = '';
           let clientSecret = '';
-          const apiBase = (this.poller.apiBaseUrl && !this.poller.apiBaseUrl.includes('gauravtesting.online')) ? this.poller.apiBaseUrl : `http://127.0.0.1:${process.env.PAYMENT_API_PORT || 6100}`;
+          let redirectUri = process.env.GMAIL_REDIRECT_URI || '';
+          const apiBase = (this.poller.apiBaseUrl && (this.poller.apiBaseUrl.includes('localhost') || this.poller.apiBaseUrl.includes('127.0.0.1')))
+            ? this.poller.apiBaseUrl
+            : `http://127.0.0.1:${process.env.PAYMENT_API_PORT || 6100}`;
 
           try {
-            const credRes = await fetch(`${apiBase}/api/v1/admin/gmail/credentials`);
+            const credRes = await fetch(`${apiBase}/api/v1/admin/gmail/credentials`, {
+              signal: AbortSignal.timeout(1000)
+            });
             if (credRes.ok) {
               const credData = await credRes.json();
               clientId = credData.clientId || credData.gmailConfig?.clientId || '';
               clientSecret = credData.clientSecret || credData.gmailConfig?.clientSecret || '';
+              if (credData.redirectUri) redirectUri = credData.redirectUri;
             }
           } catch (e) {
             console.warn('[Gmail Observer] Failed to fetch credentials from Payment API:', e.message);
@@ -133,7 +147,9 @@ export class GmailObserverServer {
             return;
           }
 
-          const redirectUri = 'https://pay-gmail.gauravtesting.online/oauth/callback';
+          if (!redirectUri) {
+            redirectUri = process.env.GMAIL_REDIRECT_URI || `http://localhost:${process.env.GMAIL_OBSERVER_PORT || 6003}/oauth/callback`;
+          }
           console.log(`[Gmail Observer] Exchanging OAuth code for tokens with Client ID: ${clientId.substring(0, 15)}... and Redirect URI: ${redirectUri}`);
 
           const tokenRes = await fetch('https://oauth2.googleapis.com/token', {

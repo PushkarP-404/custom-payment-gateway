@@ -10,6 +10,32 @@
   let currentOrderId = `ORD-${Date.now()}`;
   let isProgrammatic = false;
   let activePollInterval = null;
+  let merchantConfig = {
+    merchantKey: '00000000-0000-0000-0000-000000000001',
+    checkoutHost: 'http://localhost:7000'
+  };
+
+  async function loadConfig() {
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const data = await res.json();
+        merchantConfig = Object.assign(merchantConfig, data);
+        const script = document.getElementById('youpi-script');
+        if (script && merchantConfig.checkoutHost) {
+          const expectedSrc = `${merchantConfig.checkoutHost.replace(/\/$/, '')}/youpi.js`;
+          if (script.getAttribute('src') !== expectedSrc) {
+            script.src = expectedSrc;
+          }
+          if (merchantConfig.merchantKey) {
+            script.setAttribute('data-youpi-key', merchantConfig.merchantKey);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load /api/config:', e.message);
+    }
+  }
 
   // DOM Elements
   const planOptions = document.querySelectorAll('.plan-option');
@@ -221,6 +247,7 @@
 
       addLog('info', 'Invoking Youpi.pay() programmatic modal launcher...');
       window.Youpi.pay({
+        key: merchantConfig.merchantKey,
         order_id: currentOrderId,
         amount: parseFloat(currentPlan.amount),
         currency: 'INR',
@@ -287,11 +314,7 @@
     } catch {}
 
     window._youpiMarkExpired = startWebhookPolling(currentOrderId);
-
-    // Guaranteed direct launch
-    if (window.Youpi && typeof window.Youpi.handleButtonClick === 'function') {
-      window.Youpi.handleButtonClick(declarativePayBtn);
-    }
+    // SDK automatically handles modal launch via [data-youpi-pay] document listener
   });
 
   // Normalized DOM Event Listeners emitted by youpi.js
@@ -484,6 +507,9 @@
 
   // Initialize
   syncDeclarativeButton();
+  loadConfig().then(() => {
+    checkGatewayStatus();
+  });
   checkGatewayStatus();
   setTimeout(checkGatewayStatus, 800);
   setTimeout(checkGatewayStatus, 2500);

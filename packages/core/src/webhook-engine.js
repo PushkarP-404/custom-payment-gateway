@@ -30,6 +30,16 @@ export class WebhookEngine {
 
     const publicOutcome = isTerminalStatus(event) ? toPublicOutcome(event) : event;
 
+    let utr = session.metadata?.utr || session.metadata?.bankReferenceNumber || '';
+    if (!utr && session.attributedObservationId && this.db) {
+      try {
+        const obs = this.db.queryOne('SELECT bank_reference_number FROM payment_observations WHERE id = ?', [session.attributedObservationId]);
+        if (obs && obs.bank_reference_number) {
+          utr = obs.bank_reference_number;
+        }
+      } catch {}
+    }
+
     const payloadObj = {
       event: publicOutcome,
       paymentId: session.id,
@@ -38,6 +48,7 @@ export class WebhookEngine {
       amountPaise: Number(session.amountPaise),
       currency: session.currency || 'INR',
       method: session.method || 'UPI',
+      utr: utr || undefined,
       completedAt: session.completedAt ? session.completedAt.toISOString() : new Date().toISOString(),
       metadata: session.metadata || {}
     };
