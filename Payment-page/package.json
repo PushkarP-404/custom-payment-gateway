@@ -1,7 +1,7 @@
 {
-  "name": "payment-page-website",
+  "name": "synapse-payment-website",
   "version": "1.0.0",
-  "description": "Sample Merchant Website integrated with YOUPI Payment Gateway",
+  "description": "Synapse Website — Sovereign UPI Payment Gateway & Store",
   "main": "server.js",
   "type": "module",
   "scripts": {

@@ -119,18 +119,28 @@ export function runMigrations(targetDb) {
       webhookUrl: process.env.COIN_STORE_WEBHOOK_URL || 'http://localhost:5000/api/webhook',
       webhookSecret: process.env.COIN_STORE_WEBHOOK_SECRET || 'merchant_webhook_secret_for_wallet_store',
       branding: {
-        appName: 'YOUPI PG',
+        appName: 'Synapse',
         primaryColor: '#2563eb',
         logoUrl: null
       }
     });
   } else {
     defaultMerchant = existing[0];
+    const updates = {};
     if (!defaultMerchant.webhookSecret) {
-      merchantRepo.update(defaultMerchant.id, {
-        webhookUrl: 'http://localhost:5000/api/webhook',
-        webhookSecret: 'merchant_webhook_secret_for_wallet_store'
-      });
+      updates.webhookUrl = 'http://localhost:5000/api/webhook';
+      updates.webhookSecret = 'merchant_webhook_secret_for_wallet_store';
+    }
+    let b = defaultMerchant.branding;
+    if (typeof b === 'string') {
+      try { b = JSON.parse(b); } catch {}
+    }
+    if (b && (b.appName === 'YOUPI PG' || !b.appName)) {
+      b.appName = 'Synapse';
+      updates.branding = b;
+    }
+    if (Object.keys(updates).length > 0) {
+      merchantRepo.update(defaultMerchant.id, updates);
     }
   }
 

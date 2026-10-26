@@ -28,10 +28,10 @@ try {
 }
 
 const PORT = Number(process.env.PORT || 4000);
-const YOUPI_CHECKOUT_HOST = process.env.YOUPI_CHECKOUT_HOST || 'http://localhost:7000';
-const YOUPI_GATEWAY_API = process.env.YOUPI_GATEWAY_API || 'http://localhost:6100';
-const YOUPI_MERCHANT_KEY = process.env.YOUPI_MERCHANT_KEY || '00000000-0000-0000-0000-000000000001';
-const YOUPI_WEBHOOK_SECRET = process.env.YOUPI_WEBHOOK_SECRET || 'merchant_webhook_secret_for_wallet_store';
+const YOUPI_CHECKOUT_HOST = process.env.SYNAPSE_CHECKOUT_HOST || process.env.YOUPI_CHECKOUT_HOST || 'http://localhost:7000';
+const YOUPI_GATEWAY_API = process.env.SYNAPSE_GATEWAY_API || process.env.YOUPI_GATEWAY_API || 'http://localhost:6100';
+const YOUPI_MERCHANT_KEY = process.env.SYNAPSE_MERCHANT_KEY || process.env.YOUPI_MERCHANT_KEY || '00000000-0000-0000-0000-000000000001';
+const YOUPI_WEBHOOK_SECRET = process.env.SYNAPSE_WEBHOOK_SECRET || process.env.YOUPI_WEBHOOK_SECRET || 'merchant_webhook_secret_for_wallet_store';
 
 const app = express();
 
@@ -239,7 +239,7 @@ app.post('/api/dev/simulate-bank-credit', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log('====================================================');
-  console.log(`🌐 Merchant Store Website is running!`);
+  console.log(`🌐 Synapse Payment Website is running!`);
   console.log(`👉 Visit: http://localhost:${PORT}`);
   console.log(`🔗 Checkout Host:  ${YOUPI_CHECKOUT_HOST}`);
   console.log(`🔑 Merchant Key:   ${YOUPI_MERCHANT_KEY}`);

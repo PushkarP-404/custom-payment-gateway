@@ -29,7 +29,7 @@
     if (!isBrowser) return {};
 
     const script = document.currentScript ||
-      document.querySelector('script[src*="youpi.js"], script[src*="youpi-checkout.js"]');
+      document.querySelector('script[src*="synapse.js"], script[src*="youpi.js"], script[src*="youpi-checkout.js"]');
 
     if (!script) return {};
 
@@ -41,7 +41,7 @@
     const origin = scriptUrl ? scriptUrl.origin : (window.location.protocol + '//' + window.location.hostname + ':7000');
 
     return {
-      key: script.getAttribute('data-youpi-key') || script.getAttribute('data-key') || script.getAttribute('data-merchant-id') || '',
+      key: script.getAttribute('data-synapse-key') || script.getAttribute('data-youpi-key') || script.getAttribute('data-key') || script.getAttribute('data-merchant-id') || '',
       apiUrl: script.getAttribute('data-api-url') || origin,
       portalUrl: script.getAttribute('data-portal-url') || script.getAttribute('data-checkout-url') || origin,
       currency: script.getAttribute('data-currency') || 'INR',
@@ -524,6 +524,11 @@
         const ev = new CustomEvent(name, { detail, bubbles: true, cancelable: true });
         window.dispatchEvent(ev);
         document.dispatchEvent(ev);
+        if (name.startsWith('youpi:')) {
+          const synEv = new CustomEvent(name.replace(/^youpi:/, 'synapse:'), { detail, bubbles: true, cancelable: true });
+          window.dispatchEvent(synEv);
+          document.dispatchEvent(synEv);
+        }
       } catch (e) { }
     }
 
@@ -739,10 +744,10 @@
     }
   }
 
-  // Auto-bind click listener for all [data-youpi-pay] buttons on page
+  // Auto-bind click listener for all [data-synapse-pay] and [data-youpi-pay] buttons on page
   if (isBrowser) {
     document.addEventListener('click', function (e) {
-      const btn = e.target && e.target.closest && e.target.closest('[data-youpi-pay]');
+      const btn = e.target && e.target.closest && (e.target.closest('[data-synapse-pay]') || e.target.closest('[data-youpi-pay]'));
       if (btn) {
         e.preventDefault();
         YoupiCheckout.handleButtonClick(btn);
@@ -751,10 +756,14 @@
   }
 
   // Export globals
+  globalScope.SynapseCheckout = YoupiCheckout;
+  globalScope.Synapse = YoupiCheckout;
   globalScope.YoupiCheckout = YoupiCheckout;
   globalScope.Youpi = YoupiCheckout;
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = YoupiCheckout;
+    module.exports.Synapse = YoupiCheckout;
+    module.exports.SynapseCheckout = YoupiCheckout;
     module.exports.YoupiCheckout = YoupiCheckout;
     module.exports.Youpi = YoupiCheckout;
   }

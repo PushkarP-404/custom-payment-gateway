@@ -65,7 +65,7 @@ export class CheckoutServer {
 
     let html = this.template;
 
-    const appName = state?.branding?.appName || 'YouPI PG';
+    const appName = state?.branding?.appName || 'Synapse';
     const primaryColor = state?.branding?.primaryColor || '#0b63e5';
     const merchantName = state?.merchantName || 'Merchant Checkout';
     const orderId = state?.orderId || '';
@@ -194,8 +194,8 @@ export class CheckoutServer {
         return;
       }
 
-      // Official SDK script: GET /youpi.js or /sdk/youpi-checkout.js
-      if (pathname === '/youpi.js' || pathname === '/sdk/youpi.js' || pathname === '/sdk/youpi-checkout.js') {
+      // Official SDK script: GET /synapse.js, /youpi.js or /sdk/youpi-checkout.js
+      if (pathname === '/synapse.js' || pathname === '/sdk/synapse.js' || pathname === '/youpi.js' || pathname === '/sdk/youpi.js' || pathname === '/sdk/youpi-checkout.js') {
         try {
           const resolvedSdkPath = fs.existsSync(path.join(__dirname, 'sdk', 'youpi.js'))
             ? path.join(__dirname, 'sdk', 'youpi.js')

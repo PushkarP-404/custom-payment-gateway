@@ -29,7 +29,7 @@
     if (!isBrowser) return {};
 
     const script = document.currentScript ||
-      document.querySelector('script[src*="youpi.js"], script[src*="youpi-checkout.js"]');
+      document.querySelector('script[src*="synapse.js"], script[src*="youpi.js"], script[src*="youpi-checkout.js"]');
 
     if (!script) return {};
 
@@ -41,7 +41,7 @@
     const origin = scriptUrl ? scriptUrl.origin : (window.location.protocol + '//' + window.location.hostname + ':7000');
 
     return {
-      key: script.getAttribute('data-youpi-key') || script.getAttribute('data-key') || script.getAttribute('data-merchant-id') || '',
+      key: script.getAttribute('data-synapse-key') || script.getAttribute('data-youpi-key') || script.getAttribute('data-key') || script.getAttribute('data-merchant-id') || '',
       apiUrl: script.getAttribute('data-api-url') || origin,
       portalUrl: script.getAttribute('data-portal-url') || script.getAttribute('data-checkout-url') || origin,
       currency: script.getAttribute('data-currency') || 'INR',
@@ -253,6 +253,17 @@
         targetUrl = `${this.options.portalUrl}/checkout/demo`;
       }
 
+      // If running on localhost / 127.0.0.1 and targetUrl points to remote domain, normalize to portalUrl
+      if (isBrowser && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        try {
+          const parsed = new URL(targetUrl);
+          if (parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+            const portalBase = (this.options.portalUrl || (window.location.protocol + '//' + window.location.hostname + ':7000')).replace(/\/$/, '');
+            targetUrl = `${portalBase}${parsed.pathname}${parsed.search}`;
+          }
+        } catch {}
+      }
+
       // Add embedded flag and custom params
       const sep = targetUrl.includes('?') ? '&' : '?';
       targetUrl = `${targetUrl}${sep}embedded=1`;
@@ -335,10 +346,8 @@
       backdrop.appendChild(container);
       document.body.appendChild(backdrop);
 
-      requestAnimationFrame(() => {
-        backdrop.classList.add('active');
-        container.classList.add('active');
-      });
+      backdrop.classList.add('active');
+      container.classList.add('active');
 
       this.backdrop = backdrop;
       this.container = container;
@@ -515,6 +524,11 @@
         const ev = new CustomEvent(name, { detail, bubbles: true, cancelable: true });
         window.dispatchEvent(ev);
         document.dispatchEvent(ev);
+        if (name.startsWith('youpi:')) {
+          const synEv = new CustomEvent(name.replace(/^youpi:/, 'synapse:'), { detail, bubbles: true, cancelable: true });
+          window.dispatchEvent(synEv);
+          document.dispatchEvent(synEv);
+        }
       } catch (e) { }
     }
 
@@ -692,38 +706,48 @@
         /* MOBILE BOTTOM DRAWER / BOTTOM SHEET STYLES */
         @media (max-width: 767px) {
           .youpi-checkout-backdrop {
-            align-items: flex-end;
+            position: fixed !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            margin: 0 !important;
           }
           .youpi-checkout-container {
-            width: 100vw;
-            max-width: 100vw;
-            height: 100dvh;
-            height: 100vh;
-            height: 100%;
-            max-height: 100dvh;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-            border-top-left-radius: 18px;
-            border-top-right-radius: 18px;
-            transform: translateY(100%);
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 90vh !important;
+            height: 90dvh !important;
+            max-height: 94vh !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-top-left-radius: 20px !important;
+            border-top-right-radius: 20px !important;
+            margin: 0 !important;
+            transform: translateY(0) !important;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6) !important;
             touch-action: auto !important;
-            overflow: hidden;
-          }
-          .youpi-checkout-container.active {
-            transform: translateY(0);
+            overflow: hidden !important;
           }
           .youpi-checkout-container.closing {
-            transform: translateY(100%);
+            transform: translateY(100%) !important;
           }
         }
       `;
     }
   }
 
-  // Auto-bind click listener for all [data-youpi-pay] buttons on page
+  // Auto-bind click listener for all [data-synapse-pay] and [data-youpi-pay] buttons on page
   if (isBrowser) {
     document.addEventListener('click', function (e) {
-      const btn = e.target && e.target.closest && e.target.closest('[data-youpi-pay]');
+      const btn = e.target && e.target.closest && (e.target.closest('[data-synapse-pay]') || e.target.closest('[data-youpi-pay]'));
       if (btn) {
         e.preventDefault();
         YoupiCheckout.handleButtonClick(btn);
@@ -732,11 +756,23 @@
   }
 
   // Export globals
+  globalScope.SynapseCheckout = YoupiCheckout;
+  globalScope.Synapse = YoupiCheckout;
   globalScope.YoupiCheckout = YoupiCheckout;
   globalScope.Youpi = YoupiCheckout;
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = YoupiCheckout;
+    module.exports.Synapse = YoupiCheckout;
+    module.exports.SynapseCheckout = YoupiCheckout;
+    module.exports.YoupiCheckout = YoupiCheckout;
+    module.exports.Youpi = YoupiCheckout;
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
 
 const _exportedCheckout = (typeof window !== 'undefined' ? window : globalThis).YoupiCheckout;
 export const YoupiCheckout = _exportedCheckout;
 export const Youpi = _exportedCheckout;
+export const Synapse = _exportedCheckout;
+export const SynapseCheckout = _exportedCheckout;
 export default _exportedCheckout;
+

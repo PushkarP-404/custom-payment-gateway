@@ -3,7 +3,7 @@
 
   // State
   let currentPlan = {
-    name: 'Micro Test Sandbox Plan',
+    name: 'Synapse Micro Sandbox',
     amount: '10',
     currency: 'INR'
   };
@@ -23,11 +23,12 @@
         merchantConfig = Object.assign(merchantConfig, data);
         const script = document.getElementById('youpi-script');
         if (script && merchantConfig.checkoutHost) {
-          const expectedSrc = `${merchantConfig.checkoutHost.replace(/\/$/, '')}/youpi.js`;
+          const expectedSrc = `${merchantConfig.checkoutHost.replace(/\/$/, '')}/synapse.js`;
           if (script.getAttribute('src') !== expectedSrc) {
             script.src = expectedSrc;
           }
           if (merchantConfig.merchantKey) {
+            script.setAttribute('data-synapse-key', merchantConfig.merchantKey);
             script.setAttribute('data-youpi-key', merchantConfig.merchantKey);
           }
         }
@@ -75,7 +76,7 @@
   function launchConfetti() {
     if (!confettiContainer) return;
     confettiContainer.innerHTML = '';
-    const colors = ['#10b981', '#34d399', '#6366f1', '#a855f7', '#38bdf8', '#f59e0b', '#ec4899'];
+    const colors = ['#6366f1', '#8b5cf6', '#10b981', '#34d399', '#38bdf8', '#f59e0b', '#ec4899'];
     for (let i = 0; i < 40; i++) {
       const piece = document.createElement('div');
       piece.className = 'confetti-piece';
@@ -99,51 +100,57 @@
     if (modalHeaderSender) modalHeaderSender.textContent = senderName;
     if (modalSenderText) modalSenderText.textContent = senderName;
 
-    launchConfetti();
     paymentSuccessModal.style.display = 'flex';
+    launchConfetti();
   }
 
   function hidePaymentSuccessModal() {
-    if (paymentSuccessModal) paymentSuccessModal.style.display = 'none';
+    if (!paymentSuccessModal) return;
+    paymentSuccessModal.style.display = 'none';
   }
 
   if (modalCloseBtn) modalCloseBtn.addEventListener('click', hidePaymentSuccessModal);
   if (btnModalContinue) btnModalContinue.addEventListener('click', hidePaymentSuccessModal);
+
   if (paymentSuccessModal) {
     paymentSuccessModal.addEventListener('click', (e) => {
       if (e.target === paymentSuccessModal) hidePaymentSuccessModal();
     });
   }
 
-  if (btnCopyUtr) {
+  if (btnCopyUtr && modalUtr) {
     btnCopyUtr.addEventListener('click', () => {
-      const utr = modalUtr ? modalUtr.textContent : '';
-      if (utr && utr !== '-') {
-        navigator.clipboard.writeText(utr).then(() => {
-          btnCopyUtr.innerHTML = '<span style="color:#34d399;font-size:11px;font-weight:bold;">✓</span>';
-          setTimeout(() => {
-            btnCopyUtr.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-          }, 1800);
+      const text = modalUtr.textContent;
+      if (text && text !== '-') {
+        navigator.clipboard.writeText(text).then(() => {
+          btnCopyUtr.style.color = '#10b981';
+          setTimeout(() => { btnCopyUtr.style.color = ''; }, 1200);
         }).catch(() => {});
       }
     });
   }
 
-  // Terminal logging helper
-  function addLog(type, text) {
+  // Logger Helper
+  function addLog(type, message, extraData = null) {
     const line = document.createElement('div');
     line.className = `log-line ${type}`;
 
     const now = new Date();
-    const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+    const timeStr = `[${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}]`;
 
-    line.innerHTML = `<span class="log-time">[${timeStr}]</span> <span class="log-text">${escapeHtml(text)}</span>`;
+    let html = `<span class="log-time">${timeStr}</span> <span class="log-text">${escapeHtml(message)}</span>`;
+    if (extraData) {
+      html += `<pre style="font-size:11px; margin-top:4px; color:#94a3b8; overflow-x:auto;">${escapeHtml(JSON.stringify(extraData, null, 2))}</pre>`;
+    }
+    line.innerHTML = html;
+
     terminalLogs.appendChild(line);
     terminalLogs.scrollTop = terminalLogs.scrollHeight;
   }
 
   function escapeHtml(str) {
-    return String(str)
+    if (typeof str !== 'string') return String(str);
+    return str
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -155,6 +162,7 @@
     currentOrderId = `ORD-${Date.now()}`;
     declarativePayBtn.setAttribute('data-order-id', currentOrderId);
     declarativePayBtn.setAttribute('data-amount', currentPlan.amount);
+    declarativePayBtn.setAttribute('data-name', 'Synapse');
     declarativePayBtn.setAttribute('data-description', currentPlan.name);
     declarativePayBtn.setAttribute('data-customer-name', custNameInput.value.trim());
     declarativePayBtn.setAttribute('data-customer-phone', custPhoneInput.value.trim());
@@ -162,7 +170,7 @@
     declarativePayBtn.setAttribute('data-metadata', JSON.stringify({
       plan: currentPlan.name,
       amount: currentPlan.amount,
-      client: 'payment_page_sample'
+      client: 'synapse_website'
     }));
 
     btnPayLabel.textContent = `Pay ₹${currentPlan.amount} via UPI`;
@@ -202,7 +210,7 @@
     modeBadge.textContent = 'Declarative Button';
     declarativePayBtn.style.display = 'flex';
     programmaticPayBtn.style.display = 'none';
-    addLog('info', 'Switched to Declarative Mode: [data-youpi-pay]');
+    addLog('info', 'Switched to Declarative Mode: [data-synapse-pay]');
   });
 
   btnModeProgrammatic.addEventListener('click', () => {
@@ -212,14 +220,15 @@
     modeBadge.textContent = 'Programmatic API';
     declarativePayBtn.style.display = 'none';
     programmaticPayBtn.style.display = 'flex';
-    addLog('info', 'Switched to Programmatic Mode: Youpi.pay({...})');
+    addLog('info', 'Switched to Programmatic Mode: Synapse.pay({...})');
   });
 
   // Programmatic Pay Trigger
   programmaticPayBtn.addEventListener('click', async () => {
-    if (typeof window.Youpi === 'undefined' || typeof window.Youpi.pay !== 'function') {
-      addLog('error', 'YOUPI PG SDK (youpi.js) is not loaded! Make sure port 7000 is running.');
-      alert('YOUPI PG SDK (youpi.js) is not loaded. Please start the gateway services via `npm run dev` in the main repository.');
+    const paySdk = window.Synapse || window.Youpi;
+    if (!paySdk || typeof paySdk.pay !== 'function') {
+      addLog('error', 'Synapse SDK (synapse.js) is not loaded! Make sure port 7000 is running.');
+      alert('Synapse Payment SDK is not loaded. Please ensure gateway services are running on port 7000.');
       return;
     }
 
@@ -245,13 +254,13 @@
 
       window._youpiMarkExpired = startWebhookPolling(currentOrderId);
 
-      addLog('info', 'Invoking Youpi.pay() programmatic modal launcher...');
-      window.Youpi.pay({
+      addLog('info', 'Invoking Synapse.pay() modal launcher...');
+      paySdk.pay({
         key: merchantConfig.merchantKey,
         order_id: currentOrderId,
         amount: parseFloat(currentPlan.amount),
         currency: 'INR',
-        name: 'Apex Cloud',
+        name: 'Synapse',
         description: currentPlan.name,
         customer: {
           name: custNameInput.value.trim(),
@@ -263,7 +272,7 @@
           checkoutMode: 'programmatic'
         },
         handler: function (response) {
-          addLog('event', `[Youpi.pay handler] Status: ${response.status}, UTR: ${response.utr || 'Pending verification'}`);
+          addLog('event', `[Payment handler] Status: ${response.status}, UTR: ${response.utr || 'Pending verification'}`);
           if (response.status === 'SUCCESS') {
             showPaymentSuccessModal({
               orderId: response.order_id || currentOrderId,
@@ -274,10 +283,10 @@
           }
         },
         onFailed: function (err) {
-          addLog('error', `[Youpi.pay onFailed] Payment failed: ${err.reason || err.message}`);
+          addLog('error', `[Payment onFailed] Payment failed: ${err.reason || err.message}`);
         },
         onClose: function () {
-          addLog('info', '[Youpi.pay onClose] Customer closed modal.');
+          addLog('info', '[Payment onClose] Customer closed modal.');
         }
       });
     } catch (err) {
@@ -288,11 +297,12 @@
   // Listen to Click on Declarative button to initiate polling and launch modal
   declarativePayBtn.addEventListener('click', async () => {
     syncDeclarativeButton();
-    addLog('info', `Triggered [data-youpi-pay] for order ${currentOrderId} (₹${currentPlan.amount})`);
+    addLog('info', `Triggered checkout for order ${currentOrderId} (₹${currentPlan.amount})`);
 
-    if (!window.Youpi) {
-      addLog('error', 'YOUPI PG SDK (http://localhost:7000/youpi.js) is not loaded. Please ensure gateway services are running!');
-      alert('The YOUPI Payment Gateway is starting up on http://localhost:7000.\nPlease refresh the page in a few seconds!');
+    const paySdk = window.Synapse || window.Youpi;
+    if (!paySdk) {
+      addLog('error', 'Synapse SDK is not loaded. Please ensure gateway services are running on port 7000!');
+      alert('The Synapse Payment Gateway is starting up on http://localhost:7000.\nPlease refresh the page in a few seconds!');
       return;
     }
 
@@ -314,16 +324,15 @@
     } catch {}
 
     window._youpiMarkExpired = startWebhookPolling(currentOrderId);
-    // SDK automatically handles modal launch via [data-youpi-pay] document listener
+    // SDK automatically handles modal launch via button document listener
   });
 
-  // Normalized DOM Event Listeners emitted by youpi.js
-  window.addEventListener('youpi:payment:success', (e) => {
-    const d = e.detail || {};
-    addLog('success', `[Browser Event: youpi:payment:success] Order ${d.order_id} verified! Amount: ₹${d.amount_received}, UTR: ${d.utr}`);
+  // Handle payment outcome events
+  function handlePaymentSuccess(d) {
+    addLog('success', `[Payment Verified] Order ${d.order_id} verified! Amount: ₹${d.amount_received}, UTR: ${d.utr}`);
     
-    // Auto-dismiss youpi iframe backdrop to ensure clean modal reveal
-    const ypBackdrop = document.querySelector('.youpi-checkout-backdrop');
+    // Auto-dismiss iframe backdrop to ensure clean modal reveal
+    const ypBackdrop = document.querySelector('.youpi-checkout-backdrop, .synapse-checkout-backdrop');
     if (ypBackdrop) ypBackdrop.style.display = 'none';
 
     showPaymentSuccessModal({
@@ -333,26 +342,23 @@
       senderName: d.sender_name || (d.metadata && d.metadata.customerName) || custNameInput.value.trim() || 'Pushkar Patel',
       method: d.payment_mode || 'UPI'
     });
-  });
+  }
 
-  window.addEventListener('youpi:payment:failed', (e) => {
-    const d = e.detail || {};
-    addLog('error', `[Browser Event: youpi:payment:failed] Order ${d.order_id} failed: ${d.reason || 'declined'}`);
-  });
+  function handlePaymentFailed(d) {
+    addLog('error', `[Payment Failed] Order ${d.order_id} failed: ${d.reason || 'declined'}`);
+  }
 
-  window.addEventListener('youpi:payment:expired', (e) => {
-    const d = e.detail || {};
-    addLog('error', `[Browser Event: youpi:payment:expired] Payment window expired for order ${d.order_id}`);
+  function handlePaymentExpired(d) {
+    addLog('error', `[Payment Expired] Payment window expired for order ${d.order_id}`);
     addLog('info', `⏳ [LATE RECOVERY ACTIVE] Still watching for delayed SMS confirmation up to 10 minutes...`);
 
-    // Show a subtle banner so user knows we're still watching
     const existing = document.getElementById('youpiExpiryBanner');
     if (!existing) {
       const banner = document.createElement('div');
       banner.id = 'youpiExpiryBanner';
       banner.style.cssText = [
         'position:fixed', 'bottom:20px', 'left:50%', 'transform:translateX(-50%)',
-        'background:rgba(30,30,40,0.95)', 'color:#f59e0b',
+        'background:rgba(20,24,35,0.96)', 'color:#f59e0b',
         'border:1px solid rgba(245,158,11,0.4)', 'border-radius:12px',
         'padding:12px 20px', 'font-size:13px', 'font-family:sans-serif',
         'z-index:2147483640', 'text-align:center', 'backdrop-filter:blur(10px)',
@@ -362,24 +368,36 @@
       document.body.appendChild(banner);
     }
 
-    // Signal the poller that we're in late-recovery mode
     if (typeof window._youpiMarkExpired === 'function') {
       window._youpiMarkExpired();
     }
-  });
+  }
 
-  window.addEventListener('youpi:payment:cancelled', (e) => {
-    const d = e.detail || {};
-    addLog('info', `[Browser Event: youpi:payment:cancelled] Checkout cancelled by customer for order ${d.order_id}`);
-  });
+  function handlePaymentCancelled(d) {
+    addLog('info', `[Payment Cancelled] Checkout dismissed by customer for order ${d.order_id}`);
+  }
 
-  window.addEventListener('youpi:payment:result', (e) => {
-    const d = e.detail || {};
-    addLog('event', `[Browser Event: youpi:payment:result] Result: ${d.status} for order ${d.order_id}`);
-  });
+  function handlePaymentResult(d) {
+    addLog('event', `[Payment Result] Result: ${d.status} for order ${d.order_id}`);
+  }
+
+  // Normalized DOM Event Listeners emitted by synapse.js / youpi.js
+  window.addEventListener('synapse:payment:success', (e) => handlePaymentSuccess(e.detail || {}));
+  window.addEventListener('youpi:payment:success', (e) => handlePaymentSuccess(e.detail || {}));
+
+  window.addEventListener('synapse:payment:failed', (e) => handlePaymentFailed(e.detail || {}));
+  window.addEventListener('youpi:payment:failed', (e) => handlePaymentFailed(e.detail || {}));
+
+  window.addEventListener('synapse:payment:expired', (e) => handlePaymentExpired(e.detail || {}));
+  window.addEventListener('youpi:payment:expired', (e) => handlePaymentExpired(e.detail || {}));
+
+  window.addEventListener('synapse:payment:cancelled', (e) => handlePaymentCancelled(e.detail || {}));
+  window.addEventListener('youpi:payment:cancelled', (e) => handlePaymentCancelled(e.detail || {}));
+
+  window.addEventListener('synapse:payment:result', (e) => handlePaymentResult(e.detail || {}));
+  window.addEventListener('youpi:payment:result', (e) => handlePaymentResult(e.detail || {}));
 
   // Webhook Polling for Authoritative Server Confirmation
-  // Continues even after checkout modal expires — catches delayed-SMS bank recoveries
   function startWebhookPolling(orderId) {
     if (activePollInterval) clearInterval(activePollInterval);
 
@@ -422,8 +440,8 @@
           verifiedAmount.textContent = `₹${data.amount}`;
           verifiedUtr.textContent = data.utr;
 
-          // Auto-dismiss youpi iframe backdrop to ensure clean modal reveal
-          const ypBackdrop = document.querySelector('.youpi-checkout-backdrop');
+          // Auto-dismiss iframe backdrop
+          const ypBackdrop = document.querySelector('.youpi-checkout-backdrop, .synapse-checkout-backdrop');
           if (ypBackdrop) ypBackdrop.style.display = 'none';
 
           // Trigger Success Popup Modal
@@ -440,7 +458,6 @@
       }
     }, 2000);
 
-    // Return a function to signal expiry without stopping the poll
     return function markExpired() { isExpired = true; };
   }
 
@@ -488,8 +505,9 @@
   const gatewayStatusPill = document.getElementById('gatewayStatusPill');
 
   function checkGatewayStatus() {
-    if (window.Youpi) {
-      if (statusLabel) statusLabel.textContent = 'YOUPI PG Connected';
+    const paySdk = window.Synapse || window.Youpi;
+    if (paySdk) {
+      if (statusLabel) statusLabel.textContent = 'Synapse Gateway Connected';
       if (statusDot) statusDot.style.backgroundColor = '#10b981';
       if (gatewayStatusPill) {
         gatewayStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
@@ -513,5 +531,5 @@
   checkGatewayStatus();
   setTimeout(checkGatewayStatus, 800);
   setTimeout(checkGatewayStatus, 2500);
-  addLog('info', 'Apex Cloud merchant frontend initialized.');
+  addLog('info', 'Synapse payment website initialized.');
 })();

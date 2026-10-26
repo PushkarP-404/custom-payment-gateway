@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apex Cloud — Premium Developer Services & Store</title>
-  <meta name="description" content="Sample merchant store demonstrating seamless 0-fee UPI payments with YOUPI PG Universal One-Script Integration.">
+  <title>Synapse — Sovereign UPI Payment Gateway &amp; Developer Services</title>
+  <meta name="description" content="Synapse Website — Next-generation sovereign UPI payment platform with zero aggregator fees, universal one-script integration, and real-time banking verification.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
-  <!-- Dynamic YOUPI PG Universal Checkout Script Loader -->
-  <!-- Automatically connects to http://localhost:7000/youpi.js -->
-  <script id="youpi-script" src="http://localhost:7000/youpi.js" data-youpi-key="00000000-0000-0000-0000-000000000001"></script>
+  <!-- Dynamic Synapse Universal Checkout Script Loader -->
+  <!-- Automatically connects to http://localhost:7000/synapse.js or /youpi.js -->
+  <script id="youpi-script" src="http://localhost:7000/synapse.js" data-synapse-key="00000000-0000-0000-0000-000000000001" data-youpi-key="00000000-0000-0000-0000-000000000001"></script>
 </head>
 <body>
   <!-- Background Glow Orbs -->
@@ -25,13 +25,15 @@
     <div class="nav-container">
       <div class="brand">
         <div class="brand-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          <!-- Synapse Neural Core Icon -->
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-name">Apex Cloud</span>
-          <span class="brand-badge">PRO STORE</span>
+          <span class="brand-name">Synapse</span>
+          <span class="brand-badge">PAYMENT GATEWAY</span>
         </div>
       </div>
       <div class="gateway-status-pill" id="gatewayStatusPill">
@@ -49,9 +51,9 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
         0% Aggregator Fees • Instant UPI Settlement
       </div>
-      <h1 class="hero-title">Experience Sovereign UPI Payments</h1>
+      <h1 class="hero-title">Synapse Sovereign Payment Platform</h1>
       <p class="hero-subtitle">
-        This sample merchant website demonstrates how any external application integrates with the YOUPI Payment Gateway using a single script and HMAC-SHA256 verified webhooks.
+        Welcome to the Synapse Website. Experience zero-fee UPI payments, direct bank-to-bank settlement, single-script universal checkout, and real-time HMAC-SHA256 authenticated webhooks.
       </p>
     </section>
 
@@ -64,19 +66,19 @@
             <span class="step-badge">1</span>
             <div>
               <h2 class="card-title">Select Your Plan or Service</h2>
-              <p class="card-desc">Choose a tier to test the checkout experience</p>
+              <p class="card-desc">Choose a tier to test the Synapse checkout experience</p>
             </div>
           </div>
         </div>
 
         <div class="plans-list" id="plansList">
           <!-- Tier 0: ₹10 Test Plan (Selected by default for instant testing) -->
-          <label class="plan-option active" data-amount="10" data-name="Micro Test Sandbox Plan">
+          <label class="plan-option active" data-amount="10" data-name="Synapse Micro Sandbox">
             <div class="test-ribbon">QUICK TEST</div>
             <input type="radio" name="plan" value="10" checked>
             <div class="plan-content">
               <div class="plan-info">
-                <span class="plan-title">Micro Test Sandbox Plan</span>
+                <span class="plan-title">Synapse Micro Sandbox</span>
                 <span class="plan-perks">Live UPI Verification • 1-Click Zero-Fee Sandbox Test</span>
               </div>
               <div class="plan-price">
@@ -87,11 +89,11 @@
           </label>
 
           <!-- Tier 1 -->
-          <label class="plan-option" data-amount="299" data-name="Developer Starter Kit">
+          <label class="plan-option" data-amount="299" data-name="Synapse Developer Starter">
             <input type="radio" name="plan" value="299">
             <div class="plan-content">
               <div class="plan-info">
-                <span class="plan-title">Developer Starter Kit</span>
+                <span class="plan-title">Synapse Developer Starter</span>
                 <span class="plan-perks">Unlimited Local Tests • SQLite WAL • 1 Month</span>
               </div>
               <div class="plan-price">
@@ -102,12 +104,12 @@
           </label>
 
           <!-- Tier 2 (Popular) -->
-          <label class="plan-option" data-amount="499" data-name="Pro Sovereign Cloud">
+          <label class="plan-option" data-amount="499" data-name="Synapse Pro Sovereign Node">
             <div class="popular-ribbon">RECOMMENDED</div>
             <input type="radio" name="plan" value="499">
             <div class="plan-content">
               <div class="plan-info">
-                <span class="plan-title">Pro Sovereign Cloud</span>
+                <span class="plan-title">Synapse Pro Sovereign Node</span>
                 <span class="plan-perks">Multi-VPA Auto Queue • SMS + Gmail Mesh</span>
               </div>
               <div class="plan-price">
@@ -118,12 +120,12 @@
           </label>
 
           <!-- Tier 3 -->
-          <label class="plan-option" data-amount="999" data-name="Enterprise Cluster Node">
+          <label class="plan-option" data-amount="999" data-name="Synapse Enterprise Cluster">
             <input type="radio" name="plan" value="999">
             <div class="plan-content">
               <div class="plan-info">
-                <span class="plan-title">Enterprise Cluster Node</span>
-                <span class="plan-perks">Dedicated POS Till • Android Observer APK</span>
+                <span class="plan-title">Synapse Enterprise Cluster</span>
+                <span class="plan-perks">Dedicated POS Till • Android Observer Mesh</span>
               </div>
               <div class="plan-price">
                 <span class="currency">₹</span>
@@ -159,7 +161,7 @@
           <div class="card-title-group">
             <span class="step-badge">2</span>
             <div>
-              <h2 class="card-title">Order Summary & Pay</h2>
+              <h2 class="card-title">Order Summary &amp; Pay</h2>
               <p class="card-desc">Choose your integration trigger mode</p>
             </div>
           </div>
@@ -168,7 +170,7 @@
         <!-- Order Summary Details -->
         <div class="summary-details">
           <div class="summary-row">
-            <span class="summary-label" id="summaryPlanName">Micro Test Sandbox Plan</span>
+            <span class="summary-label" id="summaryPlanName">Synapse Micro Sandbox</span>
             <span class="summary-value" id="summarySubtotal">₹10.00</span>
           </div>
           <div class="summary-row text-muted">
@@ -195,11 +197,11 @@
           <div class="toggle-buttons">
             <button type="button" class="mode-btn active" id="btnModeDeclarative">
               <span>Zero-JS Button</span>
-              <small>[data-youpi-pay]</small>
+              <small>[data-synapse-pay]</small>
             </button>
             <button type="button" class="mode-btn" id="btnModeProgrammatic">
               <span>Programmatic</span>
-              <small>Youpi.pay({...})</small>
+              <small>Synapse.pay({...})</small>
             </button>
           </div>
         </div>
@@ -211,16 +213,17 @@
             type="button"
             id="declarativePayBtn" 
             class="pay-btn btn-primary"
+            data-synapse-pay
             data-youpi-pay 
             data-order-id="ORD-1001" 
             data-amount="10"
             data-currency="INR"
-            data-name="Apex Cloud"
-            data-description="Micro Test Sandbox Plan"
+            data-name="Synapse"
+            data-description="Synapse Micro Sandbox"
             data-customer-name="Rahul Sharma"
             data-customer-phone="9876543210"
             data-customer-email="rahul@example.com"
-            data-metadata='{"plan":"micro_test","source":"payment_page"}'>
+            data-metadata='{"plan":"synapse_sandbox","source":"synapse_website"}'>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             <span id="btnPayLabel">Pay ₹10 via UPI</span>
           </button>
@@ -232,14 +235,14 @@
             class="pay-btn btn-secondary" 
             style="display: none;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <span>Launch Programmatic Youpi.pay()</span>
+            <span>Launch Programmatic Synapse.pay()</span>
           </button>
         </div>
 
         <!-- Security guarantee footnote -->
         <div class="security-guarantee">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          Direct Bank-to-Bank UPI Rails • No Middleman Holdbacks
+          Direct Bank-to-Bank UPI Rails • Powered by Synapse Engine
         </div>
       </div>
     </div>
@@ -253,7 +256,7 @@
             <span class="control min"></span>
             <span class="control max"></span>
           </div>
-          <span class="terminal-heading">Live Payment State & Webhook Verification Terminal</span>
+          <span class="terminal-heading">Synapse Payment State &amp; Webhook Verification Terminal</span>
         </div>
         <div class="terminal-actions">
           <button class="terminal-btn" id="simulateSmsBtn" title="Simulate incoming bank SMS credit to verify the payment">
@@ -267,7 +270,7 @@
       <div class="terminal-body" id="terminalLogs">
         <div class="log-line info">
           <span class="log-time">[System]</span>
-          <span class="log-text">Ready. Load http://localhost:7000/youpi.js and click Pay to test the modal and webhooks.</span>
+          <span class="log-text">Ready. Synapse checkout ready. Click Pay to test the modal and HMAC-SHA256 webhooks.</span>
         </div>
       </div>
 
@@ -302,7 +305,7 @@
 
       <div class="success-badge">
         <span class="pulse-dot"></span>
-        HMAC-SHA256 AUTHORITATIVE CONFIRMATION
+        SYNAPSE AUTHORITATIVE VERIFICATION
       </div>
       <h2 class="modal-title">Payment Completed!</h2>
       <p class="modal-subtitle">
@@ -354,14 +357,14 @@
           </span>
           <span class="detail-val verification-badge">
             <span class="bank-dot"></span>
-            SMS Banking Observer
+            Synapse Banking Mesh
           </span>
         </div>
       </div>
 
       <div class="modal-actions">
         <button type="button" class="btn-primary modal-action-btn" id="btnModalContinue">
-          <span>Done &amp; Continue Shopping</span>
+          <span>Done &amp; Continue with Synapse</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
