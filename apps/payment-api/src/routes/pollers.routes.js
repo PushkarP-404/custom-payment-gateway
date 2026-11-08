@@ -69,7 +69,17 @@ export function registerPollerRoutes(server, ctx) {
   });
 
   // POST /api/v1/pollers/events (Universal Observation Ingest for Gmail / SMS 2-Layer Observers)
+  // Requires X-Observer-Key header matching OBSERVER_INGEST_SECRET env variable (or enrollment secret fallback).
   server.post('/api/v1/pollers/events', async (req, res) => {
+    const observerKey = req.headers['x-observer-key'] || req.headers['x-gateway-key'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
+    const expectedKey = process.env.OBSERVER_INGEST_SECRET || enrollmentSecret;
+    // Allow unauthenticated requests in test/dev environments and from internal localhost callers
+    const isInternal = req.socket?.remoteAddress === '127.0.0.1' || req.socket?.remoteAddress === '::1' || req.socket?.localAddress === req.socket?.remoteAddress;
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    if (!isTestEnv && !isInternal && observerKey !== expectedKey) {
+      HttpServer.json(res, 401, { error: 'Unauthorized: Missing or invalid X-Observer-Key header.' });
+      return;
+    }
     const body = await HttpServer.parseBody(req);
 
     let source = (body.source || 'SMS_GATEWAY').toUpperCase();
@@ -575,13 +585,12 @@ export function registerPollerRoutes(server, ctx) {
     }
 
     if (!foundPath) {
-      // Create a fallback stub APK binary file if build hasn't outputted yet
-      const fallbackDir = path.resolve(__dirname, '../../public');
-      if (!fs.existsSync(fallbackDir)) fs.mkdirSync(fallbackDir, { recursive: true });
-      foundPath = path.join(fallbackDir, 'youpi-sms-gateway.apk');
-      if (!fs.existsSync(foundPath)) {
-        fs.writeFileSync(foundPath, Buffer.from('PK\x03\x04YOUPI_SMS_GATEWAY_STANDALONE_APK_PACKAGE'));
-      }
+      HttpServer.json(res, 404, {
+        error: 'APK_NOT_BUILT',
+        message: 'The Android SMS Gateway APK has not been built yet. Run the build script first: node scripts/build-android-apk.js',
+        hint: 'Build the APK from the android-observer-app directory, then place the output at apps/android-observer-app/youpi-sms-gateway.apk'
+      });
+      return;
     }
 
     const stat = fs.statSync(foundPath);

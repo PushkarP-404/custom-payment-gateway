@@ -103,6 +103,8 @@ export function runMigrations(targetDb) {
   try { db.exec("CREATE INDEX IF NOT EXISTS idx_devices_fingerprint ON devices (fingerprint_hash);"); } catch {}
   try { db.exec("CREATE INDEX IF NOT EXISTS idx_devices_token ON devices (device_token);"); } catch {}
   try { db.exec("CREATE INDEX IF NOT EXISTS idx_payment_sessions_device ON payment_sessions (device_id);"); } catch {}
+  // Ensure fingerprint uniqueness to prevent race-condition double attribution
+  try { db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_observations_fingerprint ON payment_observations (fingerprint_hash);"); } catch {}
 
   // Seed default merchant if empty
   const merchantRepo = new MerchantRepository(db);

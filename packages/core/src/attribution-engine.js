@@ -167,15 +167,20 @@ export class AttributionEngine {
       }
     }
     if (!currentSession) {
-      // Fallback: Check if there is an ACTIVE or PROCESSING session matching this exact amount anywhere on the gateway
-      const anyActive = this.sessionRepo.db.queryOne(`
-        SELECT * FROM payment_sessions
-        WHERE status IN ('ACTIVE', 'PROCESSING') AND amount_paise = ?
-        ORDER BY created_at DESC
-        LIMIT 1
-      `, [Number(normalizedObs.amountPaise)]);
-      if (anyActive) {
-        currentSession = this.sessionRepo.mapRow(anyActive);
+      // Fallback: Check if there is an ACTIVE or PROCESSING session matching this exact amount
+      // IMPORTANT: Scoped to receiving_account_id to prevent cross-merchant attribution collisions.
+      // A gateway-wide amount-only lookup would incorrectly attribute payments across merchants
+      // when two different merchants have concurrent sessions for the same amount.
+      if (normalizedObs.receivingAccountId) {
+        const anyActive = this.sessionRepo.db.queryOne(`
+          SELECT * FROM payment_sessions
+          WHERE receiving_account_id = ? AND status IN ('ACTIVE', 'PROCESSING') AND amount_paise = ?
+          ORDER BY created_at DESC
+          LIMIT 1
+        `, [normalizedObs.receivingAccountId, Number(normalizedObs.amountPaise)]);
+        if (anyActive) {
+          currentSession = this.sessionRepo.mapRow(anyActive);
+        }
       }
     }
 
@@ -354,6 +359,30 @@ export class AttributionEngine {
 
         const graceTimer = setTimeout(() => {
           this.pendingGraceTimers.delete(targetSessionId);
+
+          // Guard: re-fetch session to ensure it is still in a verifiable state.
+          // The session may have expired or been cancelled during the grace window.
+          const liveSession = this.sessionRepo.findById(targetSessionId);
+          if (!liveSession || !['ACTIVE', 'PROCESSING'].includes(liveSession.status)) {
+            // Session is no longer in a verifiable state; do not finalize
+            if (this.auditRepo) {
+              this.auditRepo.log({
+                merchantId: targetMerchantId,
+                entityType: 'PAYMENT_SESSION',
+                entityId: targetSessionId,
+                action: 'GRACE_TIMER_ABORTED_SESSION_TERMINAL',
+                actorType: 'SYSTEM',
+                details: {
+                  observationId: targetObsId,
+                  source: targetSource,
+                  sessionStatus: liveSession?.status || 'NOT_FOUND',
+                  reason: 'Session transitioned to terminal status during grace window'
+                }
+              });
+            }
+            return;
+          }
+
           // 5 seconds elapsed without second source: finalize as Level 1
           const finalResult = this.sessionRepo.recordVerificationSource(
             targetSessionId,

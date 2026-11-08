@@ -22,21 +22,31 @@ export class ObservationRepository {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    this.db.execute(sql, [
-      id,
-      data.receivingAccountId,
-      data.source,
-      Number(data.amountPaise),
-      data.observedAt.toISOString(),
-      now,
-      data.senderVpa || null,
-      data.bankReferenceNumber || null,
-      data.fingerprintHash,
-      rawPayload,
-      data.attributionStatus || ObservationAttributionStatus.UNATTRIBUTED,
-      data.attributedPaymentId || null,
-      now
-    ]);
+    try {
+      this.db.execute(sql, [
+        id,
+        data.receivingAccountId,
+        data.source,
+        Number(data.amountPaise),
+        data.observedAt.toISOString(),
+        now,
+        data.senderVpa || null,
+        data.bankReferenceNumber || null,
+        data.fingerprintHash,
+        rawPayload,
+        data.attributionStatus || ObservationAttributionStatus.UNATTRIBUTED,
+        data.attributedPaymentId || null,
+        now
+      ]);
+    } catch (err) {
+      // UNIQUE constraint on fingerprint_hash: observation already exists (race condition duplicate).
+      // Return the existing record so callers can proceed idempotently.
+      if (err && (err.message || '').includes('UNIQUE constraint failed')) {
+        const existing = this.findByFingerprint(data.fingerprintHash);
+        if (existing) return existing;
+      }
+      throw err;
+    }
 
     return this.findById(id);
   }

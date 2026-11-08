@@ -294,6 +294,7 @@ export function createPaymentApp(customDb = null, options = {}) {
   });
 
   // Continuous 1-second background queue sync and auto-expiry daemon
+  let _queueSyncTick = 0;
   const queueSyncDaemon = setInterval(() => {
     try {
       const nowIso = new Date().toISOString();
@@ -330,6 +331,12 @@ export function createPaymentApp(customDb = null, options = {}) {
 
       for (const acc of vacantAccounts) {
         handleSlotFreedAndPromote(acc.id);
+      }
+
+      // Every 30 seconds: retry failed webhook deliveries with exponential backoff
+      _queueSyncTick++;
+      if (_queueSyncTick % 30 === 0) {
+        webhookEngine.retryPending().catch(() => {});
       }
     } catch {}
   }, 1000);

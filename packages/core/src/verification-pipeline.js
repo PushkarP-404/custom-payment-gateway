@@ -551,13 +551,27 @@ export class PaymentVerificationPipeline {
     let stage4;
 
     if (!session && parsedData?.amountPaise) {
-      const matchRow = this.db.queryOne(`
-        SELECT * FROM payment_sessions
-        WHERE status IN ('ACTIVE', 'PROCESSING') AND amount_paise = ?
-        ORDER BY created_at DESC LIMIT 1
-      `, [Number(parsedData.amountPaise)]);
-      if (matchRow) {
-        session = this.sessionRepo.mapRow(matchRow);
+      // Scoped to receiving_account_id to prevent cross-merchant attribution collisions.
+      const receivingAccountId = input.receivingAccountId;
+      if (receivingAccountId) {
+        const matchRow = this.db.queryOne(`
+          SELECT * FROM payment_sessions
+          WHERE receiving_account_id = ? AND status IN ('ACTIVE', 'PROCESSING') AND amount_paise = ?
+          ORDER BY created_at DESC LIMIT 1
+        `, [receivingAccountId, Number(parsedData.amountPaise)]);
+        if (matchRow) {
+          session = this.sessionRepo.mapRow(matchRow);
+        }
+      } else {
+        // Last resort gateway-wide fallback — only used when no receiving account context available
+        const matchRow = this.db.queryOne(`
+          SELECT * FROM payment_sessions
+          WHERE status IN ('ACTIVE', 'PROCESSING') AND amount_paise = ?
+          ORDER BY created_at DESC LIMIT 1
+        `, [Number(parsedData.amountPaise)]);
+        if (matchRow) {
+          session = this.sessionRepo.mapRow(matchRow);
+        }
       }
     }
 
