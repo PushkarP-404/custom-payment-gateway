@@ -511,6 +511,7 @@ Deep-dive engineering manuals and operational runbooks are available in the [`/d
 | 🚀 [`docs/INSTALLATION.md`](docs/INSTALLATION.md) | Host installation, prerequisites &amp; environment setup |
 | ⚙️ [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) | Environment configuration variables &amp; secret management |
 | 📱 [`docs/ANDROID_MOBILE_APP.md`](docs/ANDROID_MOBILE_APP.md) | Native Android Kotlin Observer APK guide &amp; permissions |
+| 📲 [`docs/MULTI_PHONE_RECEIVERS.md`](docs/MULTI_PHONE_RECEIVERS.md) | Multi-phone receiver setup: Redundant &amp; multi-counter phones |
 | 🔭 [`docs/OBSERVERS_SETUP.md`](docs/OBSERVERS_SETUP.md) | Complete setup for Gmail, Google Messages &amp; Android |
 | 💳 [`docs/MERCHANT_INTEGRATION.md`](docs/MERCHANT_INTEGRATION.md) | Full developer integration guide, SDK methods &amp; webhooks |
 | 🎨 [`docs/WHITE_LABEL.md`](docs/WHITE_LABEL.md) | White-label branding customizer, domains &amp; Cloudflare |
