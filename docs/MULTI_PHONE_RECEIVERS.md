@@ -4,6 +4,10 @@ This guide explains how to set up **multiple phones as payment receivers and obs
 
 Whether you want **redundancy** (multiple phones listening to the same bank account so no payment is ever missed) or a **multi-counter setup** (different billing counters with their own phones and UPI IDs), this document provides a simple, step-by-step walkthrough.
 
+# Temp plan / dev thoughts
+
+The current idea is to have a hybrid solution to tackle the 1-device problem. The 1-device problem is that this achitecture can only verify a payment buy its amount, not by who sent it, that makes it so that only 1 payment can be verified in the 5 minutes window. To tackle that, we can add multiple receiver devices (phones). Each phone will have its own unique signing key and device ID. Each phone will run the observer app, which will listen for incoming SMS and push notifications from payment apps (PhonePe, Google Pay, Paytm, BHIM, Bank SMS). When a payment is detected, the observer app will send a signed HMAC observation to the payment gateway server. The server will then match the amount and mark the session as SUCCESS. To tackle the 2-payment problem (2 phones confirming the same payment creating 2 orders), we can use a deduplication mechanism based on the UTR (Unique Transaction Reference) or other fingerprint data. Each payment session will have a unique slot, and incoming observations will be deduplicated by fingerprint_hash (UTR + account + amount). If Phone 2 sends the same payment 2 seconds after Phone 1, the gateway will recognize the duplicate UTR and ignore it safely. The hybrid solution also includes the use of Tasker / Shortcuts automation for lightweight setups (without custom APK / iPhones) and to handle edge cases. The receiver phones only need an active SIM card capable of receiving SMS messages from banks, or an active internet connection to receive push notifications from UPI merchant apps (PhonePe Business, Google Pay for Business, Paytm for Business).
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -51,17 +55,22 @@ flowchart TD
 This is the standard, production-ready setup. Each phone gets its own cryptographically signed identity (`deviceId` + unique 256-bit `signingKey`).
 
 ### Step 1: Install the APK on All Phones
+
 1. Ensure the gateway server is running:
+
    ```bash
    npm start
    ```
+
 2. Build or download the Android Observer APK (`youpi-sms-gateway.apk`).
 3. Install the APK on **Phone 1**, **Phone 2**, and any additional devices via USB or direct download:
+
    ```bash
    adb install -r apps/android-observer-app/youpi-sms-gateway.apk
    ```
 
 ### Step 2: Pair Phone 1 (Primary Phone)
+
 1. Open the **Merchant Admin Dashboard** at `http://localhost:6001` (or your domain).
 2. Navigate to **Observers & Pairing** → Click **+ Pair Android Device**.
 3. A pairing QR code will appear on screen.
@@ -74,6 +83,7 @@ This is the standard, production-ready setup. Each phone gets its own cryptograp
 5. Phone 1 will display **Status: CONNECTED (Active Observer)** with a green indicator.
 
 ### Step 3: Pair Phone 2 (Secondary / Backup Phone)
+
 1. In the Merchant Admin, click **+ Pair Android Device** again to generate a fresh pairing session.
 2. On **Phone 2**:
    - Open the Observer app.
@@ -86,8 +96,10 @@ This is the standard, production-ready setup. Each phone gets its own cryptograp
    - ✅ `Counter 2 (Samsung S23)` — Heartbeat: Just now
 
 ### Step 4: Essential Android Permissions on Each Phone
+
 To guarantee 24/7 background operation on every phone:
-1. **Notification Access**: 
+
+1. **Notification Access**:
    - Open Observer App → Tap **Grant Notification Listener Permission** → Enable toggle.
 2. **Battery Optimization Exemption (Crucial)**:
    - Go to phone **Settings** → **Apps** → **YOUPI Observer**.
@@ -116,18 +128,23 @@ To guarantee 24/7 background operation on every phone:
 If you run multiple physical counters or branches where each phone has a **different bank account or UPI ID**:
 
 ### Step 1: Add Receiving Accounts in Merchant Admin
+
 1. Go to **Merchant Admin** → **UPI Accounts**.
 2. Register your UPI IDs:
    - Account 1: `counter1@okhdfcbank` (Payee Name: "Store Counter 1")
    - Account 2: `counter2@okhdfcbank` (Payee Name: "Store Counter 2")
 
 ### Step 2: Link Phones to Specific Accounts
+
 When pairing each phone or submitting observations, specify the corresponding `receivingAccountId`:
+
 - Phone 1 at Counter 1 listens for notifications to `counter1@okhdfcbank`.
 - Phone 2 at Counter 2 listens for notifications to `counter2@okhdfcbank`.
 
 ### Step 3: Create Counter-Specific Payment Sessions
+
 When generating a checkout session via API from Counter 1's POS:
+
 ```json
 POST /api/v1/payments
 {
@@ -136,6 +153,7 @@ POST /api/v1/payments
   "receivingAccountId": "00000000-0000-0000-0000-000000000002"
 }
 ```
+
 The QR code generated will display Counter 1's specific VPA, and Phone 1 will verify the payment.
 
 ---
@@ -145,6 +163,7 @@ The QR code generated will display Counter 1's specific VPA, and Phone 1 will ve
 If staff members use iPhones or personal phones where you cannot install the custom APK, use automated webhooks.
 
 ### Option 1: Android using MacroDroid / Tasker / SMS Forwarder
+
 1. Install **MacroDroid** or **SMS Forwarder** from Google Play Store or F-Droid.
 2. Create a rule:
    - **Trigger**: SMS received from Bank sender (`*HDFC*`, `*SBI*`, `*AXIS*`, `*ICICI*`, `*PhonePe*`, etc.).
@@ -154,6 +173,7 @@ If staff members use iPhones or personal phones where you cannot install the cus
        - `Content-Type: application/json`
        - `X-Observer-Key: YOUR_OBSERVER_INGEST_SECRET`
      - **Body**:
+
        ```json
        {
          "source": "SMS_GATEWAY",
@@ -163,6 +183,7 @@ If staff members use iPhones or personal phones where you cannot install the cus
        ```
 
 ### Option 2: iPhone using Apple Shortcuts Automation
+
 1. Open the **Shortcuts** app on iOS → Tap **Automation** → **+**.
 2. Select **Message** → Set *Sender* to Bank sender or *Message Contains* to `"credited"`.
 3. Set action: **Get Contents of URL**:
@@ -204,14 +225,17 @@ In the **Merchant Admin Dashboard** (`http://localhost:6001` → **Observers & P
 ## ❓ Frequently Asked Questions (FAQ)
 
 #### Q: How many phones can be connected simultaneously?
+
 There is no hard limit. You can connect 2, 5, 10, or more phones. Each phone receives its own cryptographic key pair.
 
 #### Q: Will two phones confirming the same payment create two orders?
+
 **No.** Every payment session has a unique slot, and incoming observations are deduplicated by `fingerprint_hash` (UTR + account + amount). If Phone 2 sends the same payment 2 seconds after Phone 1, the gateway recognizes the duplicate UTR and ignores it safely.
 
 #### Q: Do the receiver phones need SIM cards for voice calling?
+
 No. They only need an active SIM card capable of receiving SMS messages from banks, or an active internet connection to receive push notifications from UPI merchant apps (PhonePe Business, Google Pay for Business, Paytm for Business).
 
 #### Q: What if a phone restarts?
-The Observer APK includes a `BootReceiver` service that automatically launches the background notification listener as soon as the phone finishes booting.
 
+The Observer APK includes a `BootReceiver` service that automatically launches the background notification listener as soon as the phone finishes booting.
