@@ -8,6 +8,15 @@ Whether you want **redundancy** (multiple phones listening to the same bank acco
 
 The current idea is to have a hybrid solution to tackle the 1-device problem. The 1-device problem is that this achitecture can only verify a payment buy its amount, not by who sent it, that makes it so that only 1 payment can be verified in the 5 minutes window. To tackle that, we can add multiple receiver devices (phones). Each phone will have its own unique signing key and device ID. Each phone will run the observer app, which will listen for incoming SMS and push notifications from payment apps (PhonePe, Google Pay, Paytm, BHIM, Bank SMS). When a payment is detected, the observer app will send a signed HMAC observation to the payment gateway server. The server will then match the amount and mark the session as SUCCESS. To tackle the 2-payment problem (2 phones confirming the same payment creating 2 orders), we can use a deduplication mechanism based on the UTR (Unique Transaction Reference) or other fingerprint data. Each payment session will have a unique slot, and incoming observations will be deduplicated by fingerprint_hash (UTR + account + amount). If Phone 2 sends the same payment 2 seconds after Phone 1, the gateway will recognize the duplicate UTR and ignore it safely. The hybrid solution also includes the use of Tasker / Shortcuts automation for lightweight setups (without custom APK / iPhones) and to handle edge cases. The receiver phones only need an active SIM card capable of receiving SMS messages from banks, or an active internet connection to receive push notifications from UPI merchant apps (PhonePe Business, Google Pay for Business, Paytm for Business).
 
+## 🔍 Monitoring & Managing Connected Devices
+
+There are two ways to approach this:
+Either make every phone ping every 60 seconds to their server to show active status, and then we can allot the user that phone's UPI qr code, if it fails to ping an active status, the server will not allot that phones QR Code to any user until an active status has been sent.
+
+Another option is to establish a 2-way handshake, when a user need a UPI QR Code, the server will send a request to a phone according to the queue, wait for a positive response, and only then will that phone be alloted.
+The tradeoff here is that there has to be a 2-way communication and takes slightly more time for the user to get QR code, but seems to be more reliable, secure, and streamlined when scaled.
+The second option should be preferred and implemented. The first option can be used as a fallback in case of failure of the second option.
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -209,18 +218,6 @@ Phones must be able to reach your gateway backend.
 
 > [!TIP]
 > For physical retail stores, connecting phones via **Cloudflare Tunnel** or a public domain is strongly recommended. This allows staff phones to switch between store Wi-Fi and 4G/5G mobile data without losing connection to the gateway.
-
----
-
-## 🔍 Monitoring & Managing Connected Devices
-
-In the **Merchant Admin Dashboard** (`http://localhost:6001` → **Observers & Pairing**):
-
-- **Live Heartbeats**: Each phone pings every 60 seconds (`POST /api/v1/pollers/android/heartbeat`). If a phone goes offline (dead battery / no internet), its status turns **OFFLINE** in real time.
-- **Last Seen Observation**: View the exact timestamp when each phone last caught an SMS.
-- **Revoke Device**: If a staff member leaves or a phone is lost, click **Unlink Device** to immediately invalidate its cryptographic signing key.
-
----
 
 ## ❓ Frequently Asked Questions (FAQ)
 
